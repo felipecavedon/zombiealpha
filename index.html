@@ -1,0 +1,2668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Zombie Survival - A pixel art action survival game">
+    <meta name="author" content="Cavedon">
+    <title>Zombie Survival - Alpha v2.0</title>
+    <style>
+        /* =====================================================
+           RESET & BASE STYLES
+           ===================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000000;
+            font-family: monospace;
+        }
+
+        /* =====================================================
+           GAME CANVAS
+           ===================================================== */
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        /* =====================================================
+           UI COMPONENTS
+           ===================================================== */
+        .ui-button {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd54a;
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .ui-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #fff;
+            transform: scale(1.05);
+        }
+
+        .ui-button:active {
+            transform: scale(0.95);
+        }
+
+        #waveControl {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        /* =====================================================
+           SHOP INTERFACE
+           ===================================================== */
+        #shopInterface {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            color: #fff;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: 200;
+            display: none;
+            min-width: 500px;
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        #shopInterface h2 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .shopItemsContainer {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .shopItem {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex: 1;
+            min-width: 180px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .shopItem:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #ffffff;
+            transform: scale(1.02);
+        }
+
+        .shopItem.selected {
+            border-color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .shopItem[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .shopItemInfo {
+            text-align: left;
+        }
+
+        .shopItemName {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .shopItemStats {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .shopControls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #555;
+        }
+
+        .shopButton {
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .shopButton:hover {
+            background: #cccccc;
+            transform: scale(1.05);
+        }
+
+        .shopButton:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* =====================================================
+           LOADING SCREEN
+           ===================================================== */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 24px;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingScreen">Loading...</div>
+    <canvas id="gameCanvas"></canvas>
+    <button id="waveControl" class="ui-button">PAUSE WAVES</button>
+    
+    <!-- Shop Interface -->
+    <div id="shopInterface">
+        <h2>MERCHANT SHOP</h2>
+        <div class="shopItemsContainer">
+            <div id="shopItems"></div>
+        </div>
+        <div class="shopControls">
+            <button id="buyButton" class="shopButton" disabled>SWAP WEAPON</button>
+            <button id="closeShopButton" class="shopButton">CLOSE</button>
+        </div>
+    </div>
+    
+    <script>
+    'use strict';
+
+    // =====================================================
+    // GAME CONFIGURATION
+    // =====================================================
+    const CONFIG = {
+        GAME_VERSION: '1.0.0-alpha',
+        DEBUG_MODE: false,
+        
+        // Physics
+        GRAVITY: 2000,
+        BULLET_GRAVITY: 120,
+        PLAYER_MOVE_SPEED: 160,
+        PLAYER_JUMP_SPEED: 540,
+        
+        // World
+        GROUND_HEIGHT: 40,
+        GROUND_COLLISION_OFFSET: -6,
+        
+        // Visual
+        SCREEN_SHAKE_DECAY: 40,
+        
+        // Player
+        PLAYER_WIDTH: 30,
+        PLAYER_HEIGHT: 40,
+        PLAYER_MAX_HP: 100,
+        
+        // Combat
+        HEADSHOT_DAMAGE_MULTIPLIER: 2.5,  // Headshots deal 2.5x damage
+        HEADSHOT_ZONE_HEIGHT_RATIO: 0.15,  // Top 15% of sprite is headshot zone
+        
+        // Timing
+        WAVE_DELAY: 2000,
+        RESTART_DELAY: 300,
+        INITIAL_SETUP_DELAY: 50,
+        LOADING_HIDE_DELAY: 100
+    };
+
+    // =====================================================
+    // COLOR PALETTE
+    // =====================================================
+    const PALETTE = {
+        outline: '#1a1c2c',
+        blue: '#2490ff',
+        blueDark: '#0b4aa8',
+        skin: '#ffd37d',
+        green: '#3c6d2a',
+        white: '#ffffff',
+        red: '#e53935',
+        hpHi: '#7CFC00',
+        hpMid: '#ffb74d',
+        hpLow: '#ef5350',
+        bullet: '#ffe66d',
+        bulletPellet: '#ffcc00',
+        bgNear: '#1d2230',
+        bgFar: '#131822',
+        ground: '#27401f',
+        groundHi: '#48a63f',
+        gunMetal: '#2a2a2a',
+        yellow: '#ffeb3b',
+        muzzleFlash: '#fff9c4',
+        // Zombie decayed flesh colors
+        zombieFlesh: '#8b8b8b',      // Medium grey for main body
+        zombieFleshDark: '#5a5a5a',  // Darker grey for shadows
+        zombieFleshLight: '#b0b0b0'  // Lighter grey for highlights
+    };
+
+    // =====================================================
+    // SPRITE DEFINITIONS
+    // =====================================================
+    const SPRITES = {
+        player: {
+            left: [
+                "..OOOOOOOO..",".OssssssOOO.",".OssssssOOOO",
+                ".OssssssOOOO",".OssssssOOOO",".OssssssbbbO",".OssssssbbbO",
+                ".OssssssbbbO",".OssssssbbbO",".OssssssbbbO",".OssssssbbbO",
+                ".ObbbbbbbbbO",".ObbbbbbbOO.","..OOOOOOOO.."
+            ],
+            right: null
+        },
+        zombie: {
+            left: [
+                "..OOOOOOOO..",".OggggggOOO.",".OggggggOOOO",
+                ".OggggggOOOO",".OggggggOOOO",".OggggggGGGO",".OggggggGGGO",
+                ".OggggggGGGO",".OggggggGGGO",".OggggggGGGO",".OggggggGGGO",
+                ".OggggggGGGO",".OGGGGGGGOO.","..OOOOOOOO.."
+            ],
+            right: null
+        },
+        zombieFat: {
+            left: [
+                "..OOOOOOOO..",".OgggggggOO.",".OgggggggOO.",
+                ".OgggggggOOO",".OgggggggOOO",".OgggggggOOO",".OgggggggGGG",
+                ".OgggggggGGG",".OgggggggGGG",".OgggggggGGG",".OgggggggGGG",
+                ".OgggggggGGG",".OGGGGGGGGGO","..OOOOOOOO.."
+            ],
+            right: null
+        },
+        merchant: {
+            left: [
+                "..OOOOOOOO..",".OssssssOOO.",".OssssssOOOO",
+                ".OssssssOOOO",".OssssssOOOO",".OssssssyyyO",".OssssssyyyO",
+                ".OssssssyyyO",".OssssssyyyO",".OssssssyyyO",".OssssssyyyO",
+                ".OyyyyyyyyyO",".OyyyyyyyOO.","..OOOOOOOO.."
+            ],
+            right: null
+        },
+        weapons: {
+            assaultRifle: [
+                "...b....",
+                "bbbbbbbb",
+                "bbb.b...",
+                "....b..."
+            ],
+            pistol: [
+                ".bbbbb..",
+                "..bb....",
+                "..b....."
+            ],
+            knife: [
+                "....b...",
+                "....b...",
+                "...bbb..",
+                "....b..."
+            ],
+            shotgun: [
+                "bbbbbbbb",
+                "b..bbbb."
+            ],
+            minigun: [
+                ".bb.........",
+                ".b..........",
+                ".bbb.b.b.bb.",
+                ".bbbbbbbbbb.",
+                ".bbb.b.b.bb."
+            ],
+            sniperRifle: [
+                "...bbb....",
+                "bbbbbbbbbb",
+                "bbb......."
+            ],
+            smg: [
+                "...b....",
+                ".bbbbbb.",
+                ".b..b...",
+                "....b..."
+            ]
+        },
+        effects: {
+            blood: ["..r.....",".rrr...","..r....."],
+            spark: ["..y.....",".yyy...","..y....."],
+            headshot: [
+                "r.r",
+                ".r.",
+                "r.r"
+            ]   
+        }
+    };
+
+    // =====================================================
+    // SPRITE COLOR MAPPING
+    // =====================================================
+    const SPRITE_COLOR_MAP = {
+        'O': 'outline',
+        's': 'skin',
+        'b': 'blue',
+        'B': 'blueDark',
+        'g': 'zombieFlesh',      // Changed from 'green' to 'zombieFlesh'
+        'G': 'zombieFleshDark',  // Changed from 'groundHi' to 'zombieFleshDark'
+        'r': 'red',
+        'y': 'yellow',
+        'l': 'bullet',
+    };
+
+    // =====================================================
+    // WEAPON DEFINITIONS
+    // =====================================================
+    const WEAPONS = {
+        rifle: {
+            id: 'rifle_mk1',
+            name: 'Assault Rifle',
+            type: 'primary',
+            damage: 7,
+            fireRate: 10,
+            bulletSpeed: 1100,
+            recoilKick: 10,
+            knockback: 140,
+            flashTime: 0.05,
+            effectiveRange: 800,
+            accuracy: 0.95,
+            sprite: 'assaultRifle',
+            ammo: {
+                current: 30,
+                max: 30,
+                reserve: Infinity,
+                type: 'rifle_ammo'
+            },
+            reloadTime: 2.5
+        },
+        pistol: {
+            id: 'pistol_basic',
+            name: 'Pistol',
+            type: 'secondary',
+            damage: 5,
+            fireRate: 4,
+            bulletSpeed: 900,
+            recoilKick: 6,
+            knockback: 90,
+            flashTime: 0.04,
+            effectiveRange: 400,
+            accuracy: 0.85,
+            sprite: 'pistol',
+            ammo: {
+                current: 15,
+                max: 15,
+                reserve: Infinity,
+                type: 'pistol_ammo'
+            },
+            reloadTime: 1.8
+        },
+        knife: {
+            id: 'knife_mk1',
+            name: 'Combat Knife',
+            type: 'melee',
+            damage: 15,
+            range: 32,
+            cooldown: 0.38,
+            sprite: 'knife',
+            ammo: {
+                current: Infinity,
+                max: Infinity,
+                reserve: Infinity,
+                type: 'melee_durability'
+            },
+            reloadTime: 0
+        },
+        shotgun: {
+            id: 'shotgun_basic',
+            name: 'Shotgun',
+            type: 'primary',
+            damage: 18,
+            fireRate: 1.5,
+            bulletSpeed: 700,
+            recoilKick: 20,
+            knockback: 250,
+            flashTime: 0.1,
+            effectiveRange: 250,
+            accuracy: 0.65,
+            sprite: 'shotgun',
+            pelletCount: 6,
+            spreadAngle: Math.PI * 0.15,
+            ammo: {
+                current: 8,
+                max: 8,
+                reserve: Infinity,
+                type: 'shotgun_shells'
+            },
+            reloadTime: 3.2
+        },
+        smg: {
+            id: 'smg_basic',
+            name: 'SMG',
+            type: 'primary',
+            damage: 4,
+            fireRate: 15,
+            bulletSpeed: 950,
+            recoilKick: 8,
+            knockback: 80,
+            flashTime: 0.03,
+            effectiveRange: 350,
+            accuracy: 0.75,
+            sprite: 'smg',
+            ammo: {
+                current: 25,
+                max: 25,
+                reserve: Infinity,
+                type: 'smg_ammo'
+            },
+            reloadTime: 1.8
+        },
+        sniper: {
+            id: 'sniper_basic',
+            name: 'Sniper Rifle',
+            type: 'primary',
+            damage: 50,
+            fireRate: 1,
+            bulletSpeed: 2500,
+            recoilKick: 25,
+            knockback: 300,
+            flashTime: 0.08,
+            effectiveRange: 1200,
+            accuracy: 0.99,
+            sprite: 'sniperRifle',
+            ammo: {
+                current: 5,
+                max: 5,
+                reserve: Infinity,
+                type: 'sniper_ammo'
+            },
+            reloadTime: 3.5
+        },
+        minigun: {
+            id: 'minigun_basic',
+            name: 'Minigun',
+            type: 'primary',
+            damage: 6,
+            fireRate: 20,
+            bulletSpeed: 1000,
+            recoilKick: 15,
+            knockback: 120,
+            flashTime: 0.02,
+            effectiveRange: 600,
+            accuracy: 0.70,
+            sprite: 'minigun',
+            ammo: {
+                current: 100,
+                max: 100,
+                reserve: Infinity,
+                type: 'minigun_ammo'
+            },
+            reloadTime: 4.0
+        }
+    };
+
+    // =====================================================
+    // SHOP ITEMS
+    // =====================================================
+    const SHOP_ITEMS = {
+        shotgun: {
+            id: 'shotgun_basic',
+            name: 'Shotgun',
+            type: 'primary',
+            price: 0,
+            weapon: { ...WEAPONS.shotgun },
+            description: 'High damage, close range',
+            stats: `DMG: ${WEAPONS.shotgun.damage} | RATE: ${WEAPONS.shotgun.fireRate}/s | RANGE: ${WEAPONS.shotgun.effectiveRange}`
+        },
+        assaultRifle: {
+            id: 'rifle_mk1',
+            name: 'Assault Rifle',
+            type: 'primary',
+            price: 0,
+            weapon: { ...WEAPONS.rifle },
+            description: 'Balanced damage and fire rate',
+            stats: `DMG: ${WEAPONS.rifle.damage} | RATE: ${WEAPONS.rifle.fireRate}/s | RANGE: ${WEAPONS.rifle.effectiveRange}`
+        },
+        smg: {
+            id: 'smg_basic',
+            name: 'SMG',
+            type: 'primary',
+            price: 0,
+            weapon: { ...WEAPONS.smg },
+            description: 'High fire rate, low damage',
+            stats: `DMG: ${WEAPONS.smg.damage} | RATE: ${WEAPONS.smg.fireRate}/s | RANGE: ${WEAPONS.smg.effectiveRange}`
+        },
+        sniper: {
+            id: 'sniper_basic',
+            name: 'Sniper Rifle',
+            type: 'primary',
+            price: 0,
+            weapon: { ...WEAPONS.sniper },
+            description: 'High damage, long range',
+            stats: `DMG: ${WEAPONS.sniper.damage} | RATE: ${WEAPONS.sniper.fireRate}/s | RANGE: ${WEAPONS.sniper.effectiveRange}`
+        },
+        minigun: {
+            id: 'minigun_basic',
+            name: 'Minigun',
+            type: 'primary',
+            price: 0,
+            weapon: { ...WEAPONS.minigun },
+            description: 'Extreme fire rate, high ammo',
+            stats: `DMG: ${WEAPONS.minigun.damage} | RATE: ${WEAPONS.minigun.fireRate}/s | RANGE: ${WEAPONS.minigun.effectiveRange}`
+        }
+    };
+
+    // =====================================================
+    // ENEMY DEFINITIONS
+    // =====================================================
+    const ENEMY_TYPES = {
+        zombie: {
+            width: 30,
+            height: 40,
+            speed: 55,
+            touchDamage: 10,
+            hitCooldown: 0.6,
+            maxHP: 30,
+            spriteKey: 'zombie'
+        },
+        zombieFat: {
+            width: 42,
+            height: 56,
+            speed: 35,
+            touchDamage: 15,
+            hitCooldown: 0.8,
+            maxHP: 80,
+            spriteKey: 'zombieFat'
+        }
+    };
+
+    // =====================================================
+    // UTILITY FUNCTIONS
+    // =====================================================
+    class Utils {
+        static clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        static flipSprite(sprite) {
+            return sprite.map(row => row.split('').reverse().join(''));
+        }
+
+        static checkCollision(x1, y1, w1, h1, x2, y2, w2, h2) {
+            return x1 < x2 + w2 && x1 + w1 > x2 && 
+                   y1 < y2 + h2 && y1 + h1 > y2;
+        }
+
+        static checkEntityCollision(a, b) {
+            return this.checkCollision(
+                a.x, a.y, a.width, a.height,
+                b.x, b.y, b.width, b.height
+            );
+        }
+
+        static getGroundY(canvasHeight, entityHeight) {
+            return canvasHeight - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET - entityHeight;
+        }
+
+        static rotateVector(dirX, dirY, angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return {
+                x: dirX * cos - dirY * sin,
+                y: dirX * sin + dirY * cos
+            };
+        }
+
+        static normalizeVector(x, y) {
+            const length = Math.hypot(x, y) || 1;
+            return { x: x / length, y: y / length };
+        }
+    }
+
+    // =====================================================
+    // AUDIO MANAGER
+    // =====================================================
+    class AudioManager {
+        constructor() {
+            this.audioContext = null;
+            this.soundConfigs = {
+                shot: { duration: 0.08, decay: 40, gain: 0.3 },
+                melee: { duration: 0.12, decay: 25, gain: 0.4 },
+                shotgun: { duration: 0.12, decay: 30, gain: 0.5 },
+                empty: { duration: 0.06, decay: 150, gain: 0.3 }
+            };
+        }
+
+        init() {
+            if (!this.audioContext) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    this.audioContext = new AudioContext();
+                }
+            }
+        }
+
+        playSound(type) {
+            if (!this.audioContext) return;
+
+            if (type === 'empty') {
+                this.playEmptyClick();
+                return;
+            }
+
+            const config = this.soundConfigs[type];
+            if (!config) return;
+
+            this.playNoiseSound(config);
+        }
+
+        playNoiseSound(config) {
+            const sampleRate = this.audioContext.sampleRate;
+            const samples = Math.floor(sampleRate * config.duration);
+            const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < samples; i++) {
+                const t = i / sampleRate;
+                data[i] = (Math.random() * 2 - 1) * Math.exp(-config.decay * t);
+            }
+
+            this.playBuffer(buffer, config.gain);
+        }
+
+        playEmptyClick() {
+            const sampleRate = this.audioContext.sampleRate;
+            const config = this.soundConfigs.empty;
+            const samples = Math.floor(sampleRate * config.duration);
+            const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < samples; i++) {
+                const t = i / sampleRate;
+                
+                if (t < 0.005) {
+                    data[i] = (Math.random() - 0.5) * 0.6;
+                } else if (t < 0.02) {
+                    data[i] = (Math.random() - 0.5) * 0.2 * Math.exp(-config.decay * t);
+                } else {
+                    data[i] = (Math.random() - 0.5) * 0.1 * Math.exp(-100 * t);
+                }
+            }
+
+            this.playBuffer(buffer, config.gain);
+        }
+
+        playBuffer(buffer, gain) {
+            const source = this.audioContext.createBufferSource();
+            source.buffer = buffer;
+
+            const gainNode = this.audioContext.createGain();
+            gainNode.gain.value = gain;
+
+            source.connect(gainNode).connect(this.audioContext.destination);
+            source.start();
+        }
+    }
+
+    // =====================================================
+    // INPUT MANAGER
+    // =====================================================
+    class InputManager {
+        constructor(game) {
+            this.game = game;
+            this.keys = { w: false, a: false, d: false };
+            this.mouse = { x: 0, y: 0, down: false };
+            this.initEventListeners();
+        }
+
+        initEventListeners() {
+            window.addEventListener('keydown', (e) => this.handleKeyDown(e));
+            window.addEventListener('keyup', (e) => this.handleKeyUp(e));
+            this.game.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+            this.game.canvas.addEventListener('mousedown', () => this.handleMouseDown());
+            window.addEventListener('mouseup', () => this.handleMouseUp());
+        }
+
+        handleKeyDown(e) {
+            const key = e.key.toLowerCase();
+            
+            if (key in this.keys) {
+                e.preventDefault();
+                this.keys[key] = true;
+            }
+
+            const keyActions = {
+                'w': () => this.handleJump(),
+                '1': () => this.game.weaponSystem.switchSlot('primary'),
+                '2': () => this.game.weaponSystem.switchSlot('secondary'),
+                '3': () => this.game.weaponSystem.switchSlot('melee'),
+                'r': () => this.handleReload(),
+                'e': () => this.game.shopSystem.tryOpenShop(),
+                ' ': () => this.handleRestart()
+            };
+
+            const action = keyActions[key];
+            if (action) action();
+        }
+
+        handleKeyUp(e) {
+            const key = e.key.toLowerCase();
+            if (key in this.keys) {
+                this.keys[key] = false;
+            }
+        }
+
+        handleMouseMove(e) {
+            const rect = this.game.canvas.getBoundingClientRect();
+            this.mouse.x = e.clientX - rect.left;
+            this.mouse.y = e.clientY - rect.top;
+        }
+
+        handleMouseDown() {
+            if (!this.game.gameOver) {
+                this.mouse.down = true;
+                this.game.audioManager.init();
+            }
+        }
+
+        handleMouseUp() {
+            this.mouse.down = false;
+            this.game.weaponSystem.resetWeaponStates();
+        }
+
+        handleJump() {
+            const player = this.game.player;
+            if (player.onGround && !this.game.gameOver) {
+                player.velocityY = -CONFIG.PLAYER_JUMP_SPEED;
+                player.onGround = false;
+            }
+        }
+
+        handleReload() {
+            if (this.game.weaponSystem.currentSlot !== 'melee' && !this.game.gameOver) {
+                this.game.weaponSystem.reloadWeapon();
+            }
+        }
+
+        handleRestart() {
+            if (this.game.gameOver && this.game.canRestart) {
+                this.game.restart();
+            }
+        }
+    }
+
+    // =====================================================
+    // WEAPON SYSTEM
+    // =====================================================
+    class WeaponSystem {
+        constructor(game) {
+            this.game = game;
+            this.currentSlot = 'primary';
+            this.inventory = this.initializeInventory();
+        }
+
+        initializeInventory() {
+            return {
+                primary: this.createWeaponInstance(WEAPONS.rifle),
+                secondary: this.createWeaponInstance(WEAPONS.pistol),
+                melee: this.createWeaponInstance(WEAPONS.knife)
+            };
+        }
+
+        createWeaponInstance(weaponTemplate) {
+            return {
+                ...weaponTemplate,
+                lastShot: -999,
+                lastSwing: -999,
+                emptyClickPlayed: false,
+                wasFiring: false,
+                isReloading: false,
+                reloadStartTime: null,
+                reloadEndTime: null
+            };
+        }
+
+        switchSlot(slot) {
+            // Cancel any ongoing reload when switching weapons
+            if (this.currentSlot !== slot) {
+                const currentWeapon = this.inventory[this.currentSlot];
+                if (currentWeapon && currentWeapon.isReloading) {
+                    currentWeapon.isReloading = false;
+                    currentWeapon.reloadStartTime = null;
+                    currentWeapon.reloadEndTime = null;
+                    console.log(`Reload canceled for ${currentWeapon.name}`);
+                }
+            }
+            
+            this.currentSlot = slot;
+        }
+
+        getCurrentWeapon() {
+            return this.inventory[this.currentSlot];
+        }
+
+        update() {
+            if (!this.game.inputManager.mouse.down) return;
+
+            const weapon = this.getCurrentWeapon();
+            if (weapon.type === 'melee') {
+                this.tryMeleeAttack(weapon);
+            } else {
+                this.tryFireWeapon(weapon);
+            }
+        }
+
+        tryFireWeapon(weapon) {
+            const now = this.game.timeElapsed;
+            const cooldown = 1 / weapon.fireRate;
+            
+            if (now - weapon.lastShot < cooldown) return;
+            if (weapon.isReloading) return;
+            
+            if (weapon.ammo && weapon.ammo.current <= 0) {
+                if (!weapon.emptyClickPlayed && !weapon.wasFiring) {
+                    this.game.audioManager.playSound('empty');
+                    weapon.emptyClickPlayed = true;
+                }
+                return;
+            }
+            
+            weapon.emptyClickPlayed = false;
+            weapon.wasFiring = true;
+            weapon.lastShot = now;
+
+            const gunPos = this.getGunPosition();
+            const direction = this.calculateFireDirection(gunPos);
+
+            if (weapon.id === 'shotgun_basic') {
+                this.fireShotgun(gunPos, direction, weapon);
+            } else {
+                this.fireSingleBullet(gunPos, direction, weapon);
+            }
+
+            this.applyRecoil(direction, weapon);
+            this.createMuzzleFlash(gunPos, direction, weapon);
+            this.consumeAmmo(weapon);
+            
+            const soundType = weapon.id === 'shotgun_basic' ? 'shotgun' : 'shot';
+            this.game.audioManager.playSound(soundType);
+        }
+
+        tryMeleeAttack(weapon) {
+            const now = this.game.timeElapsed;
+            if (now - weapon.lastSwing < weapon.cooldown) return;
+            
+            weapon.lastSwing = now;
+
+            const hitBox = this.getMeleeHitBox(weapon);
+            const hitAny = this.checkMeleeHits(hitBox, weapon);
+
+            this.game.effectsManager.screenShake = Math.max(
+                this.game.effectsManager.screenShake, 
+                hitAny ? 4 : 1.5
+            );
+            
+            this.createMeleeSlash();
+            this.game.audioManager.playSound('melee');
+        }
+
+        fireShotgun(gunPos, direction, weapon) {
+            const pelletCount = weapon.pelletCount;
+            const baseSpread = weapon.spreadAngle;
+            const pelletSpread = baseSpread / (pelletCount - 1);
+            const pelletDamage = Math.floor(weapon.damage / pelletCount);
+            
+            for (let i = 0; i < pelletCount; i++) {
+                const spreadAngle = (i - (pelletCount - 1) / 2) * pelletSpread;
+                const randomSpread = (Math.random() - 0.5) * pelletSpread * 0.2;
+                const finalAngle = spreadAngle + randomSpread;
+                
+                const pelletDir = Utils.rotateVector(direction.x, direction.y, finalAngle);
+                const normalizedDir = Utils.normalizeVector(pelletDir.x, pelletDir.y);
+                
+                const speedVariation = 0.9 + Math.random() * 0.2;
+                const pelletSpeed = weapon.bulletSpeed * speedVariation;
+                
+                this.createBullet(gunPos, normalizedDir, pelletSpeed, pelletDamage, weapon, true);
+            }
+        }
+
+        fireSingleBullet(gunPos, direction, weapon) {
+            let finalDir = { ...direction };
+            
+            if (weapon.accuracy && weapon.accuracy < 1.0) {
+                const spreadAngle = (1.0 - weapon.accuracy) * Math.PI * 0.3;
+                const randomAngle = (Math.random() - 0.5) * spreadAngle;
+                
+                const rotated = Utils.rotateVector(direction.x, direction.y, randomAngle);
+                finalDir = Utils.normalizeVector(rotated.x, rotated.y);
+            }
+
+            this.createBullet(gunPos, finalDir, weapon.bulletSpeed, weapon.damage, weapon, false);
+        }
+
+        createBullet(gunPos, direction, speed, damage, weapon, isPellet) {
+            this.game.bullets.push({
+                x: gunPos.x + direction.x * 12,
+                y: gunPos.y + direction.y * 12,
+                startX: gunPos.x + direction.x * 12,
+                startY: gunPos.y + direction.y * 12,
+                velocityX: direction.x * speed,
+                velocityY: direction.y * speed,
+                damage: damage,
+                maxRange: weapon.effectiveRange,
+                isPellet: isPellet
+            });
+        }
+
+        calculateFireDirection(gunPos) {
+            const mouse = this.game.inputManager.mouse;
+            const dx = mouse.x - gunPos.x;
+            const dy = mouse.y - gunPos.y;
+            return Utils.normalizeVector(dx, dy);
+        }
+
+        applyRecoil(direction, weapon) {
+            const player = this.game.player;
+            player.velocityX -= direction.x * weapon.knockback;
+            player.velocityY -= direction.y * weapon.knockback * 0.2;
+            this.game.effectsManager.screenShake = Math.max(
+                this.game.effectsManager.screenShake, 
+                weapon.recoilKick
+            );
+        }
+
+        createMuzzleFlash(gunPos, direction, weapon) {
+            this.game.effectsManager.muzzleFlash = {
+                active: true,
+                timer: weapon.flashTime,
+                x: gunPos.x + direction.x * 12,
+                y: gunPos.y + direction.y * 12
+            };
+        }
+
+        createMeleeSlash() {
+            const weaponPos = this.getGunPosition();
+            this.game.effectsManager.meleeSlash = {
+                active: true,
+                timer: 0.15,
+                x: weaponPos.x,
+                y: weaponPos.y,
+                facingRight: this.game.player.facingRight
+            };
+        }
+
+        consumeAmmo(weapon) {
+            if (weapon.ammo && weapon.ammo.current > 0) {
+                weapon.ammo.current = Math.max(0, weapon.ammo.current - 1);
+            }
+        }
+
+        getMeleeHitBox(weapon) {
+            const player = this.game.player;
+            return {
+                x: player.facingRight ? 
+                    player.x + player.width : 
+                    player.x - weapon.range,
+                y: player.y,
+                width: weapon.range,
+                height: player.height
+            };
+        }
+
+        checkMeleeHits(hitBox, weapon) {
+            let hitAny = false;
+            const zombies = this.game.zombies;
+            
+            for (let i = zombies.length - 1; i >= 0; i--) {
+                const zombie = zombies[i];
+                if (Utils.checkCollision(
+                    hitBox.x, hitBox.y, hitBox.width, hitBox.height,
+                    zombie.x, zombie.y, zombie.width, zombie.height
+                )) {
+                    zombie.hp = Math.max(0, zombie.hp - weapon.damage);
+                    hitAny = true;
+                    
+                    if (zombie.hp <= 0) {
+                        zombies.splice(i, 1);
+                    }
+                }
+            }
+            return hitAny;
+        }
+
+        getGunPosition() {
+            const player = this.game.player;
+            const centerX = player.x + player.width / 2;
+            // Position weapon at the center of the player's body (torso area, not head)
+            const centerY = player.y + (player.height * 0.65);
+            const offsetX = player.facingRight ? 8 : -8;
+            return { x: centerX + offsetX, y: centerY };
+        }
+
+        reloadWeapon() {
+            const weapon = this.getCurrentWeapon();
+            if (!weapon || weapon.type === 'melee' || !weapon.ammo) return;
+            
+            if (weapon.ammo.current >= weapon.ammo.max) {
+                console.log(`${weapon.name} is already full`);
+                return;
+            }
+            
+            if (weapon.isReloading) {
+                console.log(`${weapon.name} is already reloading`);
+                return;
+            }
+            
+            weapon.isReloading = true;
+            weapon.reloadStartTime = this.game.timeElapsed;
+            weapon.reloadEndTime = this.game.timeElapsed + weapon.reloadTime;
+            
+            console.log(`Started reloading ${weapon.name} (${weapon.reloadTime}s)`);
+        }
+
+        checkReloadProgress() {
+            let reloadCompleted = false;
+            
+            Object.values(this.inventory).forEach(weapon => {
+                if (weapon.isReloading && weapon.reloadEndTime) {
+                    if (this.game.timeElapsed >= weapon.reloadEndTime) {
+                        weapon.isReloading = false;
+                        weapon.ammo.current = weapon.ammo.max;
+                        weapon.reloadStartTime = null;
+                        weapon.reloadEndTime = null;
+                        console.log(`${weapon.name} reload complete`);
+                        reloadCompleted = true;
+                    }
+                }
+            });
+            
+            return reloadCompleted;
+        }
+
+        resetWeaponStates() {
+            Object.values(this.inventory).forEach(weapon => {
+                if (weapon.emptyClickPlayed !== undefined) {
+                    weapon.emptyClickPlayed = false;
+                }
+                if (weapon.wasFiring !== undefined) {
+                    weapon.wasFiring = false;
+                }
+            });
+        }
+    }
+
+    // =====================================================
+    // SHOP SYSTEM
+    // =====================================================
+    class ShopSystem {
+        constructor(game) {
+            this.game = game;
+            this.shopOpen = false;
+            this.selectedShopItem = null;
+            this.merchant = {
+                x: 200,
+                y: 0,
+                width: CONFIG.PLAYER_WIDTH,
+                height: CONFIG.PLAYER_HEIGHT,
+                facingRight: true,
+                interactionRange: 80
+            };
+            this.initializeUI();
+        }
+
+        initializeUI() {
+            const buyButton = document.getElementById('buyButton');
+            const closeButton = document.getElementById('closeShopButton');
+
+            buyButton.addEventListener('click', () => {
+                if (this.selectedShopItem) {
+                    this.buyItem(this.selectedShopItem);
+                }
+            });
+
+            closeButton.addEventListener('click', () => {
+                this.closeShop();
+            });
+        }
+
+        update() {
+            if (this.shopOpen && this.game.waveSystem.gameStage !== 'peaceful') {
+                this.closeShop();
+            }
+            
+            const distance = this.getPlayerDistance();
+            if (this.shopOpen && distance > this.merchant.interactionRange) {
+                this.closeShop();
+            }
+        }
+
+        getPlayerDistance() {
+            const player = this.game.player;
+            const playerCenterX = player.x + player.width / 2;
+            const merchantCenterX = this.merchant.x + this.merchant.width / 2;
+            return Math.abs(playerCenterX - merchantCenterX);
+        }
+
+        tryOpenShop() {
+            if (this.shopOpen) return;
+            if (this.game.waveSystem.gameStage !== 'peaceful') return;
+            
+            if (this.getPlayerDistance() <= this.merchant.interactionRange) {
+                this.openShop();
+            }
+        }
+
+        openShop() {
+            this.shopOpen = true;
+            this.selectedShopItem = null;
+            this.updateShopInterface();
+            document.getElementById('shopInterface').style.display = 'block';
+        }
+
+        closeShop() {
+            this.shopOpen = false;
+            this.selectedShopItem = null;
+            document.getElementById('shopInterface').style.display = 'none';
+        }
+
+        updateShopInterface() {
+            const shopItemsContainer = document.getElementById('shopItems');
+            const buyButton = document.getElementById('buyButton');
+            
+            shopItemsContainer.innerHTML = '';
+            
+            Object.values(SHOP_ITEMS).forEach(item => {
+                const itemElement = this.createShopItemElement(item);
+                shopItemsContainer.appendChild(itemElement);
+            });
+            
+            buyButton.disabled = true;
+        }
+
+        createShopItemElement(item) {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'shopItem';
+            itemElement.dataset.itemId = item.id;
+            
+            const isEquipped = this.game.weaponSystem.inventory.primary.id === item.id;
+            const statusText = isEquipped ? ' (EQUIPPED)' : '';
+            
+            itemElement.innerHTML = `
+                <div class="shopItemInfo">
+                    <div class="shopItemName">${item.name}${statusText}</div>
+                    <div class="shopItemStats">${item.stats}</div>
+                </div>
+            `;
+            
+            if (isEquipped) {
+                itemElement.setAttribute('disabled', 'true');
+            } else {
+                itemElement.addEventListener('click', () => {
+                    this.selectShopItem(item);
+                });
+            }
+            
+            return itemElement;
+        }
+
+        selectShopItem(item) {
+            this.selectedShopItem = item;
+            
+            document.querySelectorAll('.shopItem').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            const selectedElement = document.querySelector(`[data-item-id="${item.id}"]`);
+            if (selectedElement) {
+                selectedElement.classList.add('selected');
+            }
+            
+            document.getElementById('buyButton').disabled = false;
+        }
+
+        buyItem(item) {
+            if (!item) return;
+            
+            const weaponSystem = this.game.weaponSystem;
+            const oldPrimary = weaponSystem.inventory.primary;
+            weaponSystem.inventory.primary = weaponSystem.createWeaponInstance(item.weapon);
+            
+            this.closeShop();
+            weaponSystem.currentSlot = 'primary';
+            
+            console.log(`Swapped ${oldPrimary.name} for ${item.name}`);
+        }
+
+        setMerchantPosition(y) {
+            this.merchant.y = y;
+        }
+    }
+
+    // =====================================================
+    // WAVE SYSTEM
+    // =====================================================
+    class WaveSystem {
+        constructor(game) {
+            this.game = game;
+            this.gameStage = 'peaceful';
+            this.currentWave = 1;
+            this.zombiesPerWave = 2;
+            this.waveTimer = null;
+            this.isSpawningWave = false;
+            this.spawnTimers = [];
+            this.initializeUI();
+        }
+
+        initializeUI() {
+            const waveButton = document.getElementById('waveControl');
+            waveButton.addEventListener('click', () => this.toggleGameStage());
+            waveButton.textContent = 'START WAVES';
+            waveButton.style.borderColor = '#e53935';
+        }
+
+        toggleGameStage() {
+            console.log('Toggle game stage called');
+            console.log('Current game stage:', this.gameStage);
+            
+            if (this.gameStage === 'peaceful') {
+                console.log('Starting waves...');
+                this.startWaves();
+            } else {
+                console.log('Stopping waves...');
+                this.stopWaves();
+            }
+        }
+
+        startWaves() {
+            this.gameStage = 'waves';
+            this.spawnWave(this.currentWave);
+            
+            const waveButton = document.getElementById('waveControl');
+            waveButton.textContent = 'STOP WAVES';
+            waveButton.style.borderColor = '#ffd54a';
+            console.log('Waves started - Wave', this.currentWave);
+        }
+
+        stopWaves() {
+            console.log('Attempting to stop waves...');
+            console.log('Previous game stage:', this.gameStage);
+            console.log('Previous isSpawningWave:', this.isSpawningWave);
+            
+            this.gameStage = 'peaceful';
+            this.game.zombies = [];
+            this.isSpawningWave = false;
+            
+            // Cancel all spawn timers
+            if (this.spawnTimers && this.spawnTimers.length > 0) {
+                console.log(`Cancelling ${this.spawnTimers.length} spawn timers`);
+                this.spawnTimers.forEach(timer => clearTimeout(timer));
+                this.spawnTimers = [];
+            }
+            
+            if (this.waveTimer) {
+                clearTimeout(this.waveTimer);
+                this.waveTimer = null;
+            }
+            
+            const waveButton = document.getElementById('waveControl');
+            waveButton.textContent = 'START WAVES';
+            waveButton.style.borderColor = '#e53935';
+            console.log('Waves stopped - Peaceful mode');
+            console.log('New game stage:', this.gameStage);
+            console.log('New isSpawningWave:', this.isSpawningWave);
+        }
+
+        spawnWave(waveNumber) {
+            const zombieCount = 2 + (waveNumber - 1) * 2;
+            
+            this.game.effectsManager.showWaveAnnouncement(waveNumber);
+            
+            console.log(`Starting wave ${waveNumber} with ${zombieCount} zombies - spawning one by one`);
+            
+            // Mark that we're currently spawning a wave
+            this.isSpawningWave = true;
+            
+            // Store spawn timers so we can cancel them if needed
+            this.spawnTimers = [];
+            
+            // Spawn zombies one by one with a delay
+            let zombiesSpawned = 0;
+            const spawnNextZombie = () => {
+                // Check if we should still be spawning (in case waves were stopped)
+                if (this.gameStage !== 'waves') {
+                    console.log('Wave spawning cancelled - waves stopped');
+                    this.isSpawningWave = false;
+                    return;
+                }
+                
+                if (zombiesSpawned < zombieCount) {
+                    // Spawn from the right side of the screen
+                    const x = this.game.canvas.width + 50; // Start off-screen to the right
+                    const type = Math.random() < 0.7 ? 'zombie' : 'zombieFat';
+                    this.game.spawnZombie(x, type);
+                    
+                    zombiesSpawned++;
+                    console.log(`Spawned zombie ${zombiesSpawned}/${zombieCount} for wave ${waveNumber}`);
+                    
+                    // Schedule next zombie spawn
+                    if (zombiesSpawned < zombieCount) {
+                        const timer = setTimeout(spawnNextZombie, 1500); // 1.5 second delay between spawns
+                        this.spawnTimers.push(timer);
+                    } else {
+                        // All zombies spawned, mark wave as complete for spawning
+                        this.isSpawningWave = false;
+                        console.log(`Wave ${waveNumber} spawning complete - all ${zombieCount} zombies spawned`);
+                    }
+                }
+            };
+            
+            // Start spawning the first zombie after a short delay
+            const initialTimer = setTimeout(spawnNextZombie, 1000);
+            this.spawnTimers.push(initialTimer);
+        }
+
+        checkWaveCompletion() {
+            // Early return if we're in peaceful mode
+            if (this.gameStage === 'peaceful') {
+                return;
+            }
+            
+            // Only check for wave completion if we're not currently spawning a wave
+            if (this.gameStage === 'waves' && !this.isSpawningWave && this.game.zombies.length === 0 && !this.waveTimer) {
+                console.log('All zombies dead, setting wave timer for wave', this.currentWave + 1);
+                
+                this.waveTimer = setTimeout(() => {
+                    if (this.gameStage === 'waves') {
+                        this.currentWave++;
+                        this.spawnWave(this.currentWave);
+                        console.log('Next wave spawned:', this.currentWave);
+                        this.waveTimer = null;
+                    }
+                }, CONFIG.WAVE_DELAY);
+            } else if (this.gameStage === 'waves' && this.isSpawningWave) {
+                // Debug: log when wave completion check is skipped due to spawning
+                console.log('Wave completion check skipped - wave is still spawning');
+            }
+        }
+
+        reset() {
+            this.gameStage = 'peaceful';
+            this.currentWave = 1;
+            this.isSpawningWave = false;
+            
+            // Cancel all spawn timers
+            if (this.spawnTimers && this.spawnTimers.length > 0) {
+                this.spawnTimers.forEach(timer => clearTimeout(timer));
+                this.spawnTimers = [];
+            }
+            
+            if (this.waveTimer) {
+                clearTimeout(this.waveTimer);
+                this.waveTimer = null;
+            }
+            
+            const waveButton = document.getElementById('waveControl');
+            waveButton.textContent = 'START WAVES';
+            waveButton.style.borderColor = '#e53935';
+        }
+    }
+
+    // =====================================================
+    // EFFECTS MANAGER
+    // =====================================================
+    class EffectsManager {
+        constructor(game) {
+            this.game = game;
+            this.screenShake = 0;
+            this.muzzleFlash = { active: false, timer: 0, x: 0, y: 0 };
+            this.meleeSlash = { active: false, timer: 0, x: 0, y: 0, facingRight: true };
+            this.waveAnnouncement = { active: false, timer: 0, text: '' };
+            this.hitEffects = [];
+        }
+
+        update(dt) {
+            this.updateScreenShake(dt);
+            this.updateTimedEffect(this.muzzleFlash, dt);
+            this.updateTimedEffect(this.meleeSlash, dt);
+            this.updateTimedEffect(this.waveAnnouncement, dt);
+            this.updateHitEffects(dt);
+        }
+
+        updateScreenShake(dt) {
+            if (this.screenShake > 0) {
+                this.screenShake = Math.max(0, this.screenShake - CONFIG.SCREEN_SHAKE_DECAY * dt);
+            }
+        }
+
+        updateTimedEffect(effect, dt) {
+            if (effect.active) {
+                effect.timer -= dt;
+                if (effect.timer <= 0) {
+                    effect.active = false;
+                }
+            }
+        }
+
+        updateHitEffects(dt) {
+            for (let i = this.hitEffects.length - 1; i >= 0; i--) {
+                const effect = this.hitEffects[i];
+                effect.timer -= dt;
+                if (effect.timer <= 0) {
+                    this.hitEffects.splice(i, 1);
+                }
+            }
+        }
+
+        createHitEffect(x, y, type, hitData = null) {
+            // Use faster timing for headshot effects
+            const effectTimer = type === 'headshot' ? 0.15 : 0.3;
+            
+            this.hitEffects.push({
+                x: x,
+                y: y,
+                type: type,
+                timer: effectTimer,
+                maxTimer: effectTimer,
+                hitData: hitData  // Store additional hit data for headshots
+            });
+        }
+
+        showWaveAnnouncement(waveNumber) {
+            this.waveAnnouncement = {
+                active: true,
+                timer: 3.0,
+                text: `WAVE ${waveNumber}`
+            };
+        }
+
+        getScreenShake() {
+            if (this.screenShake <= 0) return { x: 0, y: 0 };
+            return {
+                x: (Math.random() * 2 - 1) * this.screenShake * 0.3,
+                y: (Math.random() * 2 - 1) * this.screenShake * 0.3
+            };
+        }
+    }
+
+    // =====================================================
+    // RENDERER
+    // =====================================================
+    class Renderer {
+        constructor(game) {
+            this.game = game;
+            this.ctx = game.ctx;
+            this.clouds = this.generateCloudArray();
+            this.cloudOffset = 0;
+        }
+
+        render() {
+            this.ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+
+            const shake = this.game.effectsManager.getScreenShake();
+
+            this.renderBackground();
+            this.renderGround();
+            this.renderPlayer(shake);
+            this.renderMerchant();
+            this.renderWeapon(shake);
+            this.renderBullets();
+            this.renderZombies();
+            this.renderEffects(shake);
+            this.renderHUD();
+            
+            if (this.game.gameOver) {
+                this.renderGameOver();
+            }
+        }
+
+        // Background rendering
+        renderBackground() {
+            this.ctx.fillStyle = '#000000'; // 100% black background
+            this.ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+            
+            // Render clouds if any exist
+            if (this.clouds.length > 0) {
+                this.renderClouds();
+            }
+        }
+
+        generateCloudArray() {
+            const cloudSprites = [
+                // Small fluffy clouds
+                ["..bb...",".bbbbb.","bbbbbbb","bbbbbbb",".bbbbb.","..bb..."],
+                ["...bb..","..bbbb.","bbbbbbb","bbbbbbb","..bbbb.","...bb.."],
+                
+                // Medium puffy clouds
+                ["..bbbb..",".bbbbbbb.","bbbbbbbbb","bbbbbbbbb",".bbbbbbb.","..bbbb.."],
+                ["...bbbb...","..bbbbbbb..",".bbbbbbbbb.","bbbbbbbbbb",".bbbbbbbbb.","..bbbbbbb..","...bbbb..."],
+                
+                // Large billowy clouds
+                ["..bbbbbb..",".bbbbbbbbb.","bbbbbbbbbbb","bbbbbbbbbbb","bbbbbbbbbbb",".bbbbbbbbb.","..bbbbbb.."],
+                ["...bbbbbb...","..bbbbbbbbb..",".bbbbbbbbbbb.","bbbbbbbbbbbb","bbbbbbbbbbbb",".bbbbbbbbbbb.","..bbbbbbbbb..","...bbbbbb..."],
+                
+                // Irregular cloud shapes
+                ["..b.bb..",".bbbbbb.","bbbbbbbb","bbbbbbbb",".bbbbbb.","..b.bb.."],
+                ["...b.bb...","..bbbbbb..",".bbbbbbbb.","bbbbbbbbbb",".bbbbbbbb.","..bbbbbb..","...b.bb..."],
+                
+                // Wispy clouds
+                ["....bb....","...bbbb...","..bbbbbb..",".bbbbbbbb.","..bbbbbb..","...bbbb...","....bb...."],
+                [".....bb.....","....bbbb....","...bbbbbb...","..bbbbbbbb..","...bbbbbb...","....bbbb....",".....bb....."]
+            ];
+            
+            // Randomly shuffle the cloud sprites
+            const shuffled = [...cloudSprites];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            
+            return shuffled;
+        }
+
+        renderClouds() {
+            const baseY = this.game.canvas.height * 0.25;
+            const cloudSpacing = 600; // More space between clouds
+            const screenWidth = this.game.canvas.width;
+            
+            let cloudsVisible = 0;
+            
+            // Update cloud offset for leftward movement
+            this.cloudOffset += 0.04; // Very slow cloud movement
+            
+            for (let i = 0; i < this.clouds.length; i++) {
+                // Start clouds just off-screen to the right
+                const cloudX = (i * cloudSpacing - this.cloudOffset + screenWidth + 200);
+                if (cloudX > -400 && cloudX < screenWidth + 400) {
+                    this.drawCloud(cloudX, baseY, i);
+                    cloudsVisible++;
+                }
+            }
+            
+            // If no clouds are visible, regenerate the cloud array
+            if (cloudsVisible === 0) {
+                this.clouds = this.generateCloudArray();
+                // Reset offset to ensure new clouds appear off-screen to the right
+                this.cloudOffset = 0;
+            }
+        }
+
+        drawCloud(offsetX, baseY, cloudIndex) {
+            const sprite = this.clouds[cloudIndex];
+            const pixelSize = 40;
+            const variation = Math.sin(offsetX * 0.01) * 15;
+            
+            this.drawCloudSprite(sprite, offsetX, baseY + variation, pixelSize);
+        }
+
+        drawCloudSprite(sprite, offsetX, baseY, pixelSize) {
+            const spriteWidth = sprite[0].length;
+            const spriteHeight = sprite.length;
+            const cloudWidth = spriteWidth * pixelSize;
+            const cloudHeight = spriteHeight * pixelSize;
+            const startX = offsetX + (110 - cloudWidth) / 2;
+            const startY = baseY - cloudHeight;
+
+            for (let row = 0; row < spriteHeight; row++) {
+                const line = sprite[row];
+                for (let col = 0; col < spriteWidth; col++) {
+                    if (line[col] === 'b') {
+                        this.ctx.fillStyle = '#131822'; // Very dark charcoal grey clouds
+                        this.ctx.fillRect(
+                            Math.floor(startX + col * pixelSize),
+                            Math.floor(startY + row * pixelSize),
+                            Math.ceil(pixelSize),
+                            Math.ceil(pixelSize)
+                        );
+                    }
+                }
+            }
+        }
+
+        // Ground rendering
+        renderGround() {
+            const y = this.game.canvas.height - CONFIG.GROUND_HEIGHT;
+
+            this.ctx.fillStyle = '#3d2b1f';
+            this.ctx.fillRect(0, y + 20, this.game.canvas.width, 20);
+
+            this.ctx.fillStyle = '#2d4a2d';
+            this.ctx.fillRect(0, y + 10, this.game.canvas.width, 10);
+
+            this.ctx.fillStyle = '#4a7c59';
+            this.ctx.fillRect(0, y, this.game.canvas.width, 10);
+
+            this.ctx.fillStyle = PALETTE.outline;
+            this.ctx.fillRect(0, y - 1, this.game.canvas.width, 1);
+        }
+
+        // Entity rendering
+        renderPlayer(shake) {
+            const player = this.game.player;
+            const sprite = player.facingRight ? SPRITES.player.right : SPRITES.player.left;
+            this.drawSprite(
+                sprite,
+                Math.floor(player.x + shake.x),
+                Math.floor(player.y + shake.y),
+                player.width,
+                player.height
+            );
+        }
+
+        renderMerchant() {
+            const merchant = this.game.shopSystem.merchant;
+            const sprite = SPRITES.merchant.right;
+            this.drawSprite(
+                sprite,
+                Math.floor(merchant.x),
+                Math.floor(merchant.y),
+                merchant.width,
+                merchant.height
+            );
+        }
+
+        renderWeapon(shake) {
+            const weapon = this.game.weaponSystem.getCurrentWeapon();
+            const gunPos = this.game.weaponSystem.getGunPosition();
+            const x = Math.floor(gunPos.x + shake.x);
+            const y = Math.floor(gunPos.y + shake.y);
+
+            if (weapon.type === 'melee') {
+                const angle = this.game.player.facingRight ? 0 : Math.PI;
+                const offsetX = this.game.player.facingRight ? 4 : -4;
+                this.drawWeaponSprite(weapon.sprite, x + offsetX, y, angle, 3);
+            } else {
+                const mouse = this.game.inputManager.mouse;
+                const angle = Math.atan2(mouse.y - gunPos.y, mouse.x - gunPos.x);
+                this.drawWeaponSprite(weapon.sprite, x, y, angle, 3);
+            }
+        }
+
+        renderBullets() {
+            this.game.bullets.forEach(bullet => {
+                this.ctx.fillStyle = bullet.isPellet ? PALETTE.bulletPellet : PALETTE.bullet;
+                const size = bullet.isPellet ? 2 : 3;
+                this.ctx.fillRect(
+                    Math.floor(bullet.x) - Math.floor(size / 2),
+                    Math.floor(bullet.y) - Math.floor(size / 2),
+                    size, size
+                );
+            });
+        }
+
+        renderZombies() {
+            this.game.zombies.forEach(zombie => {
+                const spriteSet = SPRITES[zombie.spriteKey];
+                const sprite = zombie.facingRight ? spriteSet.right : spriteSet.left;
+                this.drawSprite(
+                    sprite,
+                    Math.floor(zombie.x),
+                    Math.floor(zombie.y),
+                    zombie.width,
+                    zombie.height
+                );
+
+                this.renderHealthBar(zombie);
+            });
+        }
+
+        renderHealthBar(entity) {
+            const barWidth = entity.width;
+            const barHeight = 4;
+            const barX = Math.floor(entity.x);
+            const barY = Math.floor(entity.y) - 6;
+            const hpRatio = entity.hp / entity.maxHP;
+
+            this.ctx.fillStyle = '#222';
+            this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            this.ctx.fillStyle = hpRatio > 0.5 ? PALETTE.hpHi : 
+                                (hpRatio > 0.2 ? PALETTE.hpMid : PALETTE.hpLow);
+            this.ctx.fillRect(barX, barY, Math.floor(barWidth * hpRatio), barHeight);
+        }
+
+        // Effects rendering
+        renderEffects(shake) {
+            const effects = this.game.effectsManager;
+            
+            this.renderMuzzleFlash(effects.muzzleFlash);
+            this.renderMeleeSlash(effects.meleeSlash);
+            this.renderWaveAnnouncement(effects.waveAnnouncement);
+            this.renderHitEffects(effects.hitEffects);
+        }
+
+        renderMuzzleFlash(muzzleFlash) {
+            if (!muzzleFlash.active) return;
+            
+            const radius = 1 + Math.floor(Math.random() * 2);
+            this.ctx.fillStyle = PALETTE.muzzleFlash;
+            this.ctx.fillRect(
+                Math.floor(muzzleFlash.x) - radius,
+                Math.floor(muzzleFlash.y) - radius,
+                radius * 2 + 1,
+                radius * 2 + 1
+            );
+        }
+
+        renderMeleeSlash(meleeSlash) {
+            if (!meleeSlash.active) return;
+            
+            this.ctx.save();
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 3;
+            this.ctx.globalAlpha = meleeSlash.timer / 0.15;
+
+            const slashX = Math.floor(meleeSlash.x);
+            const slashY = Math.floor(meleeSlash.y);
+            const slashLength = 18;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(slashX, slashY);
+            const endX = meleeSlash.facingRight ? slashX + slashLength : slashX - slashLength;
+            this.ctx.lineTo(endX, slashY);
+            this.ctx.stroke();
+            this.ctx.restore();
+        }
+
+        renderWaveAnnouncement(announcement) {
+            if (!announcement.active) return;
+            
+            this.ctx.save();
+            this.ctx.font = 'bold 48px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.globalAlpha = Math.min(1, announcement.timer / 0.5);
+            
+            const centerX = this.game.canvas.width / 2;
+            const centerY = this.game.canvas.height / 2;
+            
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillText(announcement.text, centerX + 2, centerY + 2);
+            
+            this.ctx.fillStyle = '#ffd54a';
+            this.ctx.fillText(announcement.text, centerX, centerY);
+            
+            this.ctx.restore();
+        }
+
+
+
+        renderHitEffects(hitEffects) {
+            hitEffects.forEach(effect => {
+                const alpha = effect.timer / effect.maxTimer;
+                this.ctx.save();
+                this.ctx.globalAlpha = alpha;
+                
+                const sprite = SPRITES.effects[effect.type];
+                if (sprite && sprite.length > 0) {
+                    // Use larger size for headshot effects
+                    const size = effect.type === 'headshot' ? 16 : 8;
+                    const offset = effect.type === 'headshot' ? 8 : 4;
+                    this.drawSprite(sprite, Math.floor(effect.x - offset), Math.floor(effect.y - offset), size, size);
+                } else {
+                    // Fallback
+                    let fallbackColor = PALETTE.red;
+                    if (effect.type === 'headshot') {
+                        fallbackColor = PALETTE.headshot;
+                    } else if (effect.type === 'spark') {
+                        fallbackColor = PALETTE.yellow;
+                    }
+                    
+                    this.ctx.fillStyle = fallbackColor;
+                    this.ctx.beginPath();
+                    this.ctx.arc(Math.floor(effect.x), Math.floor(effect.y), 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                this.ctx.restore();
+            });
+        }
+
+        // HUD rendering
+        renderHUD() {
+            this.renderHealthBar();
+            this.renderWeaponSlots();
+            this.renderWaveInfo();
+            this.renderMerchantHint();
+            
+            if (CONFIG.DEBUG_MODE) {
+                this.renderDebugInfo();
+            }
+        }
+
+        renderHealthBar() {
+            const player = this.game.player;
+            const hpBarX = 10;
+            const hpBarY = 20;
+            const hpBarWidth = 260;
+            const hpBarHeight = 16;
+
+            this.ctx.fillStyle = '#111';
+            this.ctx.fillRect(hpBarX - 2, hpBarY - 2, hpBarWidth + 4, hpBarHeight + 4);
+
+            const hpRatio = player.hp / player.maxHP;
+            this.ctx.fillStyle = hpRatio > 0.5 ? PALETTE.hpHi : 
+                                (hpRatio > 0.2 ? PALETTE.hpMid : PALETTE.hpLow);
+            this.ctx.fillRect(hpBarX, hpBarY, Math.floor(hpBarWidth * hpRatio), hpBarHeight);
+
+            this.ctx.strokeStyle = '#555';
+            this.ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+
+            this.ctx.font = '14px monospace';
+            this.ctx.fillStyle = '#bbb';
+            this.ctx.fillText(`HP: ${player.hp}/${player.maxHP}`, hpBarX, hpBarY - 4);
+        }
+
+        renderWeaponSlots() {
+            const slotWidth = 110;
+            const slotHeight = 36;
+            const slotPadding = 6;
+            const slotStartX = 10;
+            const slotStartY = 48;
+
+            const slots = ['primary', 'secondary', 'melee'];
+            const weaponSystem = this.game.weaponSystem;
+
+            slots.forEach((slot, index) => {
+                const x = slotStartX + index * (slotWidth + slotPadding);
+                const y = slotStartY;
+
+                this.ctx.save();
+
+                this.ctx.fillStyle = '#111';
+                this.ctx.fillRect(x, y, slotWidth, slotHeight);
+
+                this.ctx.strokeStyle = slot === weaponSystem.currentSlot ? '#ffd54a' : '#555';
+                this.ctx.lineWidth = slot === weaponSystem.currentSlot ? 2 : 1;
+                this.ctx.strokeRect(x, y, slotWidth, slotHeight);
+
+                this.ctx.fillStyle = '#bbb';
+                this.ctx.font = '14px monospace';
+                this.ctx.fillText(`${index + 1}. ${slot.toUpperCase()}`, x + 8, y + 14);
+
+                const weapon = weaponSystem.inventory[slot];
+                this.ctx.fillStyle = weapon ? '#9cf' : '#888';
+                this.ctx.font = '14px monospace';
+                this.ctx.fillText(weapon ? weapon.name : 'Empty', x + 8, y + 32);
+                
+                if (weapon && weapon.type !== 'melee' && weapon.ammo) {
+                    if (weapon.isReloading) {
+                        this.ctx.fillStyle = '#ff5555';
+                        this.ctx.font = '10px monospace';
+                        this.ctx.fillText('RELOADING', x + 8, y + 48);
+                        
+                        // Draw reload progress bar
+                        const progressBarWidth = 94; // Leave some margin from slot edges
+                        const progressBarHeight = 4;
+                        const progressBarX = x + 8;
+                        const progressBarY = y + 54;
+                        
+                        // Background bar
+                        this.ctx.fillStyle = '#333';
+                        this.ctx.fillRect(progressBarX, progressBarY, progressBarWidth, progressBarHeight);
+                        
+                        // Progress bar
+                        const progress = (this.game.timeElapsed - weapon.reloadStartTime) / weapon.reloadTime;
+                        const clampedProgress = Math.max(0, Math.min(1, progress));
+                        const progressBarFillWidth = Math.floor(progressBarWidth * clampedProgress);
+                        
+                        this.ctx.fillStyle = '#ff5555';
+                        this.ctx.fillRect(progressBarX, progressBarY, progressBarFillWidth, progressBarHeight);
+                        
+                        // Border
+                        this.ctx.strokeStyle = '#555';
+                        this.ctx.lineWidth = 1;
+                        this.ctx.strokeRect(progressBarX, progressBarY, progressBarWidth, progressBarHeight);
+                    } else {
+                        const ammoText = `${weapon.ammo.current}/${weapon.ammo.max}`;
+                        this.ctx.fillStyle = '#ffd54a';
+                        this.ctx.font = '12px monospace';
+                        this.ctx.fillText(ammoText, x + 8, y + 50);
+                    }
+                }
+                
+                this.ctx.restore();
+            });
+        }
+
+        renderWaveInfo() {
+            const buttonElement = document.getElementById('waveControl');
+            if (buttonElement) {
+                const buttonRect = buttonElement.getBoundingClientRect();
+                const waveX = buttonRect.left + (buttonRect.width / 2) - 40;
+                const waveY = buttonRect.bottom + 25;
+                
+                this.ctx.fillStyle = '#ffd54a';
+                this.ctx.font = 'bold 16px monospace';
+                this.ctx.fillText(`WAVE ${this.game.waveSystem.currentWave}`, waveX, waveY);
+            }
+        }
+
+        renderMerchantHint() {
+            if (this.game.waveSystem.gameStage !== 'peaceful') return;
+            
+            const distance = this.game.shopSystem.getPlayerDistance();
+            const merchant = this.game.shopSystem.merchant;
+            
+            if (distance <= merchant.interactionRange) {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '16px monospace';
+                this.ctx.textAlign = 'center';
+                
+                const merchantCenterX = merchant.x + merchant.width / 2;
+                const textY = merchant.y - 20;
+                
+                this.ctx.fillText('Press E to open shop', merchantCenterX, textY);
+                this.ctx.textAlign = 'left';
+            }
+        }
+
+        renderDebugInfo() {
+            this.ctx.fillStyle = '#666';
+            this.ctx.font = '10px monospace';
+            this.ctx.fillText(`v${CONFIG.GAME_VERSION}`, this.game.canvas.width - 80, 20);
+            
+            // Debug: Show headshot zones on zombies
+            if (CONFIG.DEBUG_MODE) {
+                this.game.zombies.forEach(zombie => {
+                    const spriteSet = SPRITES[zombie.spriteKey];
+                    const sprite = zombie.facingRight ? spriteSet.right : spriteSet.left;
+                    
+                    if (sprite && sprite.length > 0) {
+                        const spriteHeight = sprite.length;
+                        const headshotZoneHeight = Math.ceil(spriteHeight * CONFIG.HEADSHOT_ZONE_HEIGHT_RATIO);
+                        
+                        // Calculate the sprite origin (same logic as collision detection)
+                        const scaleY = Math.floor(zombie.height / spriteHeight);
+                        const cellHeight = Math.max(1, scaleY);
+                        const originY = Math.floor(zombie.y + (zombie.height - spriteHeight * cellHeight));
+                        
+                        // Draw headshot zone indicator
+                        this.ctx.strokeStyle = '#ff0000';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.setLineDash([5, 5]);
+                        this.ctx.strokeRect(
+                            zombie.x, 
+                            originY, 
+                            zombie.width, 
+                            headshotZoneHeight * cellHeight
+                        );
+                        this.ctx.setLineDash([]);
+                    }
+                });
+            }
+        }
+
+
+
+        renderGameOver() {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            this.ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+
+            this.ctx.fillStyle = '#ff5555';
+            this.ctx.font = 'bold 32px monospace';
+            this.ctx.fillText('YOU DIED', this.game.canvas.width / 2 - 90, this.game.canvas.height / 2 - 6);
+
+            this.ctx.fillStyle = '#ccc';
+            this.ctx.font = '16px monospace';
+            this.ctx.fillText('Press R or Space to restart', this.game.canvas.width / 2 - 120, this.game.canvas.height / 2 + 24);
+        }
+
+        // Sprite drawing
+        drawSprite(sprite, x, y, width, height) {
+            if (!sprite || !Array.isArray(sprite) || sprite.length === 0) return;
+
+            const actualWidth = sprite[0].length;
+            const actualHeight = sprite.length;
+            
+            const scaleX = Math.floor(width / actualWidth);
+            const scaleY = Math.floor(height / actualHeight);
+            const cellWidth = Math.max(1, scaleX);
+            const cellHeight = Math.max(1, scaleY);
+            const originX = Math.floor(x + (width - actualWidth * cellWidth) / 2);
+            const originY = Math.floor(y + (height - actualHeight * cellHeight));
+
+            for (let row = 0; row < actualHeight; row++) {
+                const line = sprite[row];
+                if (!line || typeof line !== 'string') continue;
+                
+                for (let col = 0; col < actualWidth; col++) {
+                    const char = line[col];
+                    if (char === '.') continue;
+                    
+                    const colorKey = SPRITE_COLOR_MAP[char];
+                    if (!colorKey) continue;
+                    
+                    this.ctx.fillStyle = PALETTE[colorKey];
+                    this.ctx.fillRect(
+                        Math.floor(originX + col * cellWidth),
+                        Math.floor(originY + row * cellHeight),
+                        cellWidth,
+                        cellHeight
+                    );
+                }
+            }
+        }
+
+        drawWeaponSprite(spriteKey, x, y, angle, pixelSize) {
+            const sprite = SPRITES.weapons[spriteKey];
+            if (!sprite) return;
+
+            this.ctx.save();
+            this.ctx.translate(x, y);
+            this.ctx.rotate(angle);
+
+            if (Math.cos(angle) < 0) {
+                this.ctx.scale(1, -1);
+            }
+
+            const spriteWidth = sprite[0].length;
+            const spriteHeight = sprite.length;
+            // Center the weapon sprite properly around the given position
+            const startX = -(spriteWidth * pixelSize) / 2;
+            const startY = -(spriteHeight * pixelSize) / 2;
+
+            for (let row = 0; row < spriteHeight; row++) {
+                const line = sprite[row];
+                for (let col = 0; col < spriteWidth; col++) {
+                    if (line[col] === 'b') {
+                        this.ctx.fillStyle = PALETTE.gunMetal;
+                        this.ctx.fillRect(
+                            Math.floor(startX + col * pixelSize - 0.5),
+                            Math.floor(startY + row * pixelSize - 0.5),
+                            pixelSize + 1,
+                            pixelSize + 1
+                        );
+                    }
+                }
+            }
+
+            this.ctx.restore();
+        }
+    }
+
+    // =====================================================
+    // PHYSICS ENGINE
+    // =====================================================
+    class PhysicsEngine {
+        constructor(game) {
+            this.game = game;
+        }
+
+        updatePlayer(dt) {
+            const player = this.game.player;
+            const input = this.game.inputManager;
+            
+            // Horizontal movement
+            const moveDir = (input.keys.a ? -1 : 0) + (input.keys.d ? 1 : 0);
+            player.velocityX += (moveDir * CONFIG.PLAYER_MOVE_SPEED - player.velocityX) * 0.4;
+            player.x += player.velocityX * dt;
+            player.x = Utils.clamp(player.x, 0, this.game.canvas.width - player.width);
+
+            // Vertical movement (gravity)
+            player.velocityY += CONFIG.GRAVITY * dt;
+            player.y += player.velocityY * dt;
+
+            // Ground collision
+            const groundY = Utils.getGroundY(this.game.canvas.height, player.height);
+            if (player.y > groundY) {
+                player.y = groundY;
+                player.velocityY = 0;
+                player.onGround = true;
+            } else {
+                player.onGround = false;
+            }
+
+            // Ceiling collision
+            if (player.y < 0) {
+                player.y = 0;
+                player.velocityY = 0;
+            }
+
+            // Update facing direction
+            const centerX = player.x + player.width / 2;
+            player.facingRight = input.mouse.x >= centerX;
+        }
+
+        updateBullets(dt) {
+            const bullets = this.game.bullets;
+            
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+
+                // Apply gravity
+                bullet.velocityY += CONFIG.BULLET_GRAVITY * dt;
+
+                // Update position
+                bullet.x += bullet.velocityX * dt;
+                bullet.y += bullet.velocityY * dt;
+
+                // Check zombie hits
+                const hitResult = this.checkBulletHits(bullet);
+                
+                if (hitResult.hit) {
+                    this.game.effectsManager.createHitEffect(hitResult.x, hitResult.y, hitResult.type, hitResult);
+                    
+                    // Add extra screen shake for headshots
+                    if (hitResult.isHeadshot) {
+                        this.game.effectsManager.screenShake = Math.max(
+                            this.game.effectsManager.screenShake, 
+                            8
+                        );
+                    }
+                }
+
+                // Check if bullet should be removed
+                if (this.shouldRemoveBullet(bullet, hitResult.hit)) {
+                    if (!hitResult.hit) {
+                        this.game.effectsManager.createHitEffect(bullet.x, bullet.y, 'spark');
+                    }
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+
+        checkBulletHits(bullet) {
+            const zombies = this.game.zombies;
+            
+            for (let j = zombies.length - 1; j >= 0; j--) {
+                const zombie = zombies[j];
+                
+                // First do a quick rectangular bounds check for performance
+                if (bullet.x >= zombie.x && bullet.x <= zombie.x + zombie.width &&
+                    bullet.y >= zombie.y && bullet.y <= zombie.y + zombie.height) {
+                    
+                    // Then do pixel-perfect collision detection
+                    if (this.checkPixelPerfectCollision(bullet, zombie)) {
+                        // Check if it's a headshot
+                        const isHeadshot = this.checkHeadshot(bullet, zombie);
+                        const damage = isHeadshot ? 
+                            Math.floor(bullet.damage * CONFIG.HEADSHOT_DAMAGE_MULTIPLIER) : 
+                            bullet.damage;
+                        
+                        zombie.hp = Math.max(0, zombie.hp - damage);
+
+                        if (zombie.hp <= 0) {
+                            zombies.splice(j, 1);
+                        }
+                        
+                        const effectType = isHeadshot ? 'headshot' : 'blood';
+                        return { 
+                            hit: true, 
+                            type: effectType, 
+                            x: bullet.x, 
+                            y: bullet.y,
+                            isHeadshot: isHeadshot,
+                            damage: damage,
+                            originalDamage: bullet.damage
+                        };
+                    }
+                }
+            }
+            
+            return { hit: false };
+        }
+
+        checkPixelPerfectCollision(bullet, zombie) {
+            // Get the zombie's sprite
+            const spriteSet = SPRITES[zombie.spriteKey];
+            const sprite = zombie.facingRight ? spriteSet.right : spriteSet.left;
+            
+            if (!sprite || !Array.isArray(sprite) || sprite.length === 0) {
+                return false;
+            }
+
+            // Calculate sprite dimensions and scaling (same as drawSprite method)
+            const spriteWidth = sprite[0].length;
+            const spriteHeight = sprite.length;
+            const scaleX = Math.floor(zombie.width / spriteWidth);
+            const scaleY = Math.floor(zombie.height / spriteHeight);
+            const cellWidth = Math.max(1, scaleX);
+            const cellHeight = Math.max(1, scaleY);
+            
+            // Calculate the sprite origin (same centering logic as drawSprite)
+            const originX = Math.floor(zombie.x + (zombie.width - spriteWidth * cellWidth) / 2);
+            const originY = Math.floor(zombie.y + (zombie.height - spriteHeight * cellHeight));
+
+            // Calculate the bullet position relative to the sprite origin
+            const relativeX = Math.floor(bullet.x - originX);
+            const relativeY = Math.floor(bullet.y - originY);
+            
+            // Convert bullet position to sprite coordinates
+            const spriteX = Math.floor(relativeX / cellWidth);
+            const spriteY = Math.floor(relativeY / cellHeight);
+            
+            // Check if the bullet is within the sprite bounds
+            if (spriteX < 0 || spriteX >= spriteWidth || spriteY < 0 || spriteY >= spriteHeight) {
+                return false;
+            }
+            
+            // Get the character at the bullet position in the sprite
+            const spriteChar = sprite[spriteY][spriteX];
+            
+            // Return true if the bullet hits a non-transparent pixel (not '.')
+            return spriteChar !== '.';
+        }
+
+        checkHeadshot(bullet, zombie) {
+            // Get the zombie's sprite
+            const spriteSet = SPRITES[zombie.spriteKey];
+            const sprite = zombie.facingRight ? spriteSet.right : spriteSet.left;
+            
+            if (!sprite || !Array.isArray(sprite) || sprite.length === 0) {
+                return false;
+            }
+
+            // Calculate sprite dimensions and scaling (same as checkPixelPerfectCollision)
+            const spriteWidth = sprite[0].length;
+            const spriteHeight = sprite.length;
+            const scaleX = Math.floor(zombie.width / spriteWidth);
+            const scaleY = Math.floor(zombie.height / spriteHeight);
+            const cellWidth = Math.max(1, scaleX);
+            const cellHeight = Math.max(1, scaleY);
+            
+            // Calculate the sprite origin (same centering logic as checkPixelPerfectCollision)
+            const originX = Math.floor(zombie.x + (zombie.width - spriteWidth * cellWidth) / 2);
+            const originY = Math.floor(zombie.y + (zombie.height - spriteHeight * cellHeight));
+
+            // Calculate the bullet position relative to the sprite origin
+            const relativeX = Math.floor(bullet.x - originX);
+            const relativeY = Math.floor(bullet.y - originY);
+            
+            // Convert bullet position to sprite coordinates
+            const spriteX = Math.floor(relativeX / cellWidth);
+            const spriteY = Math.floor(relativeY / cellHeight);
+            
+            // Check if the bullet is within the sprite bounds
+            if (spriteX < 0 || spriteX >= spriteWidth || spriteY < 0 || spriteY >= spriteHeight) {
+                return false;
+            }
+            
+            // Calculate the headshot zone (top 15% of the sprite)
+            const headshotZoneHeight = Math.ceil(spriteHeight * CONFIG.HEADSHOT_ZONE_HEIGHT_RATIO);
+            
+            // Check if the bullet hit is in the headshot zone
+            return spriteY < headshotZoneHeight;
+        }
+
+        shouldRemoveBullet(bullet, hit) {
+            const groundY = this.game.canvas.height - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
+            
+            return hit || 
+                   bullet.x < -10 || bullet.x > this.game.canvas.width + 10 ||
+                   bullet.y < -10 || bullet.y > this.game.canvas.height + 10 ||
+                   bullet.y >= groundY;
+        }
+
+        updateZombies(dt) {
+            this.game.zombies.forEach(zombie => {
+                this.updateZombieAI(zombie, dt);
+                this.keepZombieOnGround(zombie);
+                this.checkZombiePlayerCollision(zombie);
+            });
+        }
+
+        updateZombieAI(zombie, dt) {
+            const player = this.game.player;
+            const playerCenterX = player.x + player.width / 2;
+            const zombieCenterX = zombie.x + zombie.width / 2;
+            const distanceX = playerCenterX - zombieCenterX;
+            
+            const moveThreshold = 20;
+            
+            if (Math.abs(distanceX) > moveThreshold) {
+                const dirX = Math.sign(distanceX);
+                zombie.velocityX = dirX * zombie.speed;
+                zombie.x += zombie.velocityX * dt;
+                zombie.x = Utils.clamp(zombie.x, 0, this.game.canvas.width - zombie.width);
+            } else {
+                this.handleZombieStuck(zombie, dt);
+            }
+
+            // Update facing direction
+            if (Math.abs(distanceX) > 5) {
+                zombie.facingRight = distanceX > 0;
+            }
+        }
+
+        handleZombieStuck(zombie, dt) {
+            if (!zombie.stuckTimer) zombie.stuckTimer = 0;
+            zombie.stuckTimer += dt;
+            
+            if (zombie.stuckTimer > 1.0) {
+                zombie.velocityX = (Math.random() - 0.5) * 30;
+                zombie.stuckTimer = 0;
+            } else {
+                zombie.velocityX = 0;
+            }
+        }
+
+        keepZombieOnGround(zombie) {
+            zombie.y = Utils.getGroundY(this.game.canvas.height, zombie.height);
+        }
+
+        checkZombiePlayerCollision(zombie) {
+            const player = this.game.player;
+            
+            if (Utils.checkEntityCollision(player, zombie)) {
+                const now = this.game.timeElapsed;
+                if (now - zombie.lastHitTime >= zombie.hitCooldown) {
+                    this.game.applyDamage(zombie.touchDamage);
+                    zombie.lastHitTime = now;
+                }
+
+                zombie.velocityX *= 0.1;
+                
+                // Push separation
+                if (player.x < zombie.x) {
+                    const push = (player.x + player.width) - zombie.x;
+                    player.x -= push * 0.2;
+                    zombie.x += push * 0.2;
+                } else {
+                    const push = (zombie.x + zombie.width) - player.x;
+                    player.x += push * 0.2;
+                    zombie.x -= push * 0.2;
+                }
+            }
+        }
+    }
+
+    // =====================================================
+    // MAIN GAME CLASS
+    // =====================================================
+    class ZombieSurvivalGame {
+        constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.ctx.imageSmoothingEnabled = false;
+            
+            this.initializeSystems();
+            this.initializeGameState();
+            this.setupCanvas();
+            this.initializeSprites();
+            
+            this.lastTime = 0;
+            this.deltaTime = 0;
+            this.timeElapsed = 0;
+            
+            setTimeout(() => this.setupInitialPositions(), CONFIG.INITIAL_SETUP_DELAY);
+            setTimeout(() => this.hideLoadingScreen(), CONFIG.LOADING_HIDE_DELAY);
+        }
+
+        initializeSystems() {
+            this.audioManager = new AudioManager();
+            this.inputManager = new InputManager(this);
+            this.weaponSystem = new WeaponSystem(this);
+            this.shopSystem = new ShopSystem(this);
+            this.waveSystem = new WaveSystem(this);
+            this.effectsManager = new EffectsManager(this);
+            this.renderer = new Renderer(this);
+            this.physics = new PhysicsEngine(this);
+        }
+
+        initializeGameState() {
+            this.player = {
+                x: 60,
+                y: 0,
+                width: CONFIG.PLAYER_WIDTH,
+                height: CONFIG.PLAYER_HEIGHT,
+                velocityX: 0,
+                velocityY: 0,
+                hp: CONFIG.PLAYER_MAX_HP,
+                maxHP: CONFIG.PLAYER_MAX_HP,
+                onGround: true,
+                facingRight: true
+            };
+
+            this.gameOver = false;
+            this.canRestart = false;
+            this.bullets = [];
+            this.zombies = [];
+        }
+
+        initializeSprites() {
+            SPRITES.player.right = Utils.flipSprite(SPRITES.player.left);
+            SPRITES.zombie.right = Utils.flipSprite(SPRITES.zombie.left);
+            SPRITES.zombieFat.right = Utils.flipSprite(SPRITES.zombieFat.left);
+            SPRITES.merchant.right = Utils.flipSprite(SPRITES.merchant.left);
+        }
+
+        setupCanvas() {
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+        }
+
+        resizeCanvas() {
+            const oldWidth = this.canvas.width;
+
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+
+            if (this.player && this.canvas.width < oldWidth) {
+                this.player.x = Math.min(this.player.x, this.canvas.width - 100);
+            }
+
+            if (this.zombies) {
+                this.zombies.forEach(zombie => {
+                    if (zombie.x + zombie.width > this.canvas.width) {
+                        zombie.x = this.canvas.width - zombie.width - 10;
+                    }
+                });
+            }
+
+            this.updatePositionsAfterResize();
+        }
+
+        updatePositionsAfterResize() {
+            if (this.player) {
+                const groundY = Utils.getGroundY(this.canvas.height, this.player.height);
+                if (this.player.onGround) {
+                    this.player.y = groundY;
+                }
+            }
+
+            if (this.shopSystem) {
+                const groundY = Utils.getGroundY(this.canvas.height, this.shopSystem.merchant.height);
+                this.shopSystem.setMerchantPosition(groundY);
+            }
+        }
+
+        setupInitialPositions() {
+            if (this.canvas.width === 0 || this.canvas.height === 0) {
+                setTimeout(() => this.setupInitialPositions(), 100);
+                return;
+            }
+            
+            this.player.x = Math.min(60, this.canvas.width - 200);
+            
+            const groundY = Utils.getGroundY(this.canvas.height, this.player.height);
+            this.player.y = groundY;
+            this.player.onGround = true;
+            this.player.velocityY = 0;
+            this.player.velocityX = 0;
+
+            this.inputManager.mouse.x = this.player.x + this.player.width / 2;
+            this.inputManager.mouse.y = this.player.y + this.player.height / 2;
+
+            this.shopSystem.merchant.x = 200;
+            this.shopSystem.setMerchantPosition(groundY);
+
+            this.spawnInitialEnemies();
+        }
+
+        spawnInitialEnemies() {
+            // Start with no enemies in peaceful mode
+        }
+
+        spawnZombie(x, type = 'zombie') {
+            const template = ENEMY_TYPES[type];
+            if (!template) return;
+
+            const zombie = {
+                x: x,
+                y: Utils.getGroundY(this.canvas.height, template.height),
+                width: template.width,
+                height: template.height,
+                velocityX: 0,
+                velocityY: 0,
+                hp: template.maxHP,
+                maxHP: template.maxHP,
+                speed: template.speed,
+                touchDamage: template.touchDamage,
+                hitCooldown: template.hitCooldown,
+                lastHitTime: -999,
+                onGround: true,
+                facingRight: false,
+                spriteKey: template.spriteKey,
+                stuckTimer: 0
+            };
+
+            this.zombies.push(zombie);
+        }
+
+        hideLoadingScreen() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+        }
+
+        applyDamage(amount) {
+            if (this.gameOver) return;
+            
+            this.player.hp = Math.max(0, this.player.hp - Math.floor(amount));
+            this.effectsManager.screenShake = Math.max(this.effectsManager.screenShake, 6);
+            
+            if (this.player.hp <= 0) {
+                this.triggerGameOver();
+            }
+        }
+
+        triggerGameOver() {
+            this.gameOver = true;
+            this.canRestart = false;
+            setTimeout(() => {
+                this.canRestart = true;
+            }, CONFIG.RESTART_DELAY);
+        }
+
+        restart() {
+            this.initializeGameState();
+            this.weaponSystem.inventory = this.weaponSystem.initializeInventory();
+            this.weaponSystem.currentSlot = 'secondary';
+            this.waveSystem.reset();
+            this.shopSystem.closeShop();
+            this.setupInitialPositions();
+        }
+
+        update(deltaTime) {
+            if (this.gameOver) return;
+
+            this.physics.updatePlayer(deltaTime);
+            this.shopSystem.update();
+            this.weaponSystem.update();
+            this.physics.updateBullets(deltaTime);
+            this.physics.updateZombies(deltaTime);
+            this.effectsManager.update(deltaTime);
+            
+            const reloadCompleted = this.weaponSystem.checkReloadProgress();
+            if (reloadCompleted) {
+                this.renderer.render();
+            }
+            
+            this.waveSystem.checkWaveCompletion();
+        }
+
+        render() {
+            this.renderer.render();
+        }
+
+        start() {
+            this.lastTime = performance.now();
+            this.gameLoop(this.lastTime);
+        }
+
+        gameLoop(currentTime) {
+            this.deltaTime = Math.min(0.0167, Math.max(0, (currentTime - this.lastTime) / 1000));
+            this.timeElapsed += this.deltaTime;
+            this.lastTime = currentTime;
+
+            this.update(this.deltaTime);
+            this.render();
+
+            requestAnimationFrame((time) => this.gameLoop(time));
+        }
+    }
+
+    // =====================================================
+    // INITIALIZATION
+    // =====================================================
+    window.addEventListener('DOMContentLoaded', () => {
+        const game = new ZombieSurvivalGame();
+        game.start();
+        
+        console.log(`%cZombie Survival Alpha v${CONFIG.GAME_VERSION}`, 'color: #7CFC00; font-size: 16px; font-weight: bold;');
+        console.log('%cControls: WASD to move, 1-2-3 to switch weapons, Mouse to aim/shoot, E near merchant to open shop', 'color: #9cf;');
+    });
+    </script>
+</body>
+</html>
