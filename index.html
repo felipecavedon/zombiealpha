@@ -2659,7 +2659,7 @@
             
             // Mobile-responsive positioning and sizing
             const x = 10;
-            const y = 20;
+            const y = isMobile ? 70 : 20; // Add 50px offset on mobile for browser UI
             const maxWidth = isMobile ? Math.min(CONFIG.HP_BAR_WIDTH, MobileDetector.getWorldWidth() - 60) : CONFIG.HP_BAR_WIDTH;
             const width = Math.max(180, maxWidth); // Minimum width of 180px
             const height = CONFIG.HP_BAR_HEIGHT;
@@ -2702,7 +2702,7 @@
                 colWidth = 200;  // Width of each column
             }
             
-            const tableY = 20;   // Same top padding as health bar
+            const tableY = isMobile ? 70 : 20;   // Same top padding as health bar, adjusted for mobile
             const rowHeight = 20;  // Height of each row
             const columnSpacing = isMobile ? 8 : 0; // Add spacing between columns on mobile
             
@@ -2842,7 +2842,7 @@
                 const weaponHudEnd = weaponHudStart + (weaponColWidth * 3) + (columnSpacing * 2); // 3 columns + 2 spacings
                 
                 waveX = weaponHudEnd + 15;  // 15px spacing after weapon HUD
-                waveY = 20;  // Same top padding as health bar
+                waveY = 70;  // Same top padding as health bar, adjusted for mobile
             } else {
                 // Desktop: Position to the right of the weapon HUD with consistent spacing
                 // Weapon HUD: starts at x=290, width=600px, ends at x=890
