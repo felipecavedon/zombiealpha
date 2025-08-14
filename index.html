@@ -58,6 +58,14 @@
             -moz-osx-font-smoothing: unset;
         }
 
+        /* Mobile 720p resolution override */
+        @media (max-width: 768px) and (pointer: coarse), (max-height: 768px) and (pointer: coarse) {
+            #gameCanvas {
+                width: 1280px;
+                height: 720px;
+            }
+        }
+
         /* =====================================================
            MOBILE CONTROLS
            ===================================================== */
@@ -105,23 +113,9 @@
             transform: translate(calc(-50% + var(--stick-offset-x, 0px)), calc(-50% + var(--stick-offset-y, 0px))) scale(1.2);
         }
         
-        .analog-stick.right.active {
-            border-color: #ff4444;
-            box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
-        }
-        
-        .analog-stick.right.active::before {
-            background: rgba(255, 68, 68, 0.9);
-        }
-
         .analog-stick.left {
             bottom: 30px;
             left: 30px;
-        }
-
-        .analog-stick.right {
-            bottom: 30px;
-            right: 30px;
         }
 
         .mobile-buttons {
@@ -489,6 +483,72 @@
                 min-width: 130px;
             }
         }
+        
+        /* =====================================================
+           MOBILE ROTATION MESSAGE
+           ===================================================== */
+        .rotation-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .rotation-content {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd54a;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+        
+        .rotation-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: rotate-hint 2s ease-in-out infinite;
+        }
+        
+        @keyframes rotate-hint {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(10deg); }
+        }
+        
+        .rotation-content h3 {
+            color: #ffd54a;
+            font-size: 24px;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }
+        
+        .rotation-content p {
+            color: #ccc;
+            font-size: 16px;
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        /* Show rotation message only on mobile portrait */
+        @media (orientation: portrait) and (pointer: coarse) and (max-width: 768px) {
+            .rotation-message {
+                display: flex;
+            }
+        }
+        
+        /* Hide rotation message in landscape */
+        @media (orientation: landscape) {
+            .rotation-message {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -498,10 +558,18 @@
         <button id="waveControl" class="ui-button">START WAVES</button>
     </div>
     
+    <!-- Mobile Portrait Rotation Message -->
+    <div id="rotationMessage" class="rotation-message">
+        <div class="rotation-content">
+            <div class="rotation-icon">📱➡️📱</div>
+            <h3>Rotate for Better Experience</h3>
+            <p>This game is optimized for landscape mode</p>
+        </div>
+    </div>
+    
     <!-- Mobile Controls -->
     <div class="mobile-controls" id="mobileControls">
         <div class="analog-stick left" id="leftStick"></div>
-        <div class="analog-stick right" id="rightStick"></div>
         <div class="mobile-buttons">
             <div class="mobile-button jump" id="jumpButton">JUMP</div>
             <div class="mobile-button reload" id="reloadButton">R</div>
@@ -542,6 +610,10 @@
         // World
         WORLD_WIDTH: 1920,
         WORLD_HEIGHT: 1080,
+        
+        // Mobile World (720p)
+        MOBILE_WORLD_WIDTH: 1280,
+        MOBILE_WORLD_HEIGHT: 720,
         GROUND_HEIGHT: 40,
         GROUND_COLLISION_OFFSET: -6,
         
@@ -974,6 +1046,28 @@
         static getDevicePixelRatio() {
             return window.devicePixelRatio || 1;
         }
+        
+        static getWorldWidth() {
+            if (!this.isMobile()) return CONFIG.WORLD_WIDTH;
+            
+            // For mobile, adjust dimensions based on orientation
+            if (this.isPortrait()) {
+                return CONFIG.MOBILE_WORLD_WIDTH;  // 1280 for portrait
+            } else {
+                return 1280; // Use 1280 width for landscape (16:9 aspect ratio)
+            }
+        }
+        
+        static getWorldHeight() {
+            if (!this.isMobile()) return CONFIG.WORLD_HEIGHT;
+            
+            // For mobile, adjust dimensions based on orientation
+            if (this.isPortrait()) {
+                return CONFIG.MOBILE_WORLD_HEIGHT; // 720 for portrait
+            } else {
+                return 720; // Use 720 height for landscape (16:9 aspect ratio)
+            }
+        }
     }
 
     // =====================================================
@@ -1141,7 +1235,6 @@
             this.game = game;
             this.isActive = false;
             this.leftStick = { x: 0, y: 0, active: false, element: null };
-            this.rightStick = { x: 0, y: 0, active: false, element: null };
             this.touchStartPos = { x: 0, y: 0 };
             this.stickRadius = 60;
             this.initMobileControls();
@@ -1149,11 +1242,9 @@
 
         initMobileControls() {
             this.leftStick.element = document.getElementById('leftStick');
-            this.rightStick.element = document.getElementById('rightStick');
             
-            // Initialize touch events for analog sticks
+            // Initialize touch events for analog stick
             this.initAnalogStick(this.leftStick, 'left');
-            this.initAnalogStick(this.rightStick, 'right');
             
             // Initialize mobile buttons
             this.initMobileButtons();
@@ -1162,27 +1253,15 @@
         initAnalogStick(stick, side) {
             const element = stick.element;
             
-            if (side === 'right') {
-                // Right stick handles shooting
-                element.addEventListener('touchstart', (e) => this.handleRightStickTouchStart(e, stick));
-                element.addEventListener('touchmove', (e) => this.handleRightStickTouchMove(e, stick));
-                element.addEventListener('touchend', (e) => this.handleRightStickTouchEnd(e, stick));
-                
-                // Mouse events for testing on desktop
-                element.addEventListener('mousedown', (e) => this.handleRightStickMouseDown(e, stick));
-                element.addEventListener('mousemove', (e) => this.handleRightStickMouseMove(e, stick));
-                element.addEventListener('mouseup', (e) => this.handleRightStickMouseUp(e, stick));
-            } else {
-                // Left stick handles movement
-                element.addEventListener('touchstart', (e) => this.handleStickTouchStart(e, stick, side));
-                element.addEventListener('touchmove', (e) => this.handleStickTouchMove(e, stick, side));
-                element.addEventListener('touchend', (e) => this.handleStickTouchEnd(e, stick, side));
-                
-                // Mouse events for testing on desktop
-                element.addEventListener('mousedown', (e) => this.handleStickMouseDown(e, stick, side));
-                element.addEventListener('mousemove', (e) => this.handleStickMouseMove(e, stick, side));
-                element.addEventListener('mouseup', (e) => this.handleStickMouseUp(e, stick, side));
-            }
+            // Left stick handles movement
+            element.addEventListener('touchstart', (e) => this.handleStickTouchStart(e, stick, side));
+            element.addEventListener('touchmove', (e) => this.handleStickTouchMove(e, stick, side));
+            element.addEventListener('touchend', (e) => this.handleStickTouchEnd(e, stick, side));
+            
+            // Mouse events for testing on desktop
+            element.addEventListener('mousedown', (e) => this.handleStickMouseDown(e, stick, side));
+            element.addEventListener('mousemove', (e) => this.handleStickMouseMove(e, stick, side));
+            element.addEventListener('mouseup', (e) => this.handleStickMouseUp(e, stick, side));
         }
 
         initMobileButtons() {
@@ -1250,14 +1329,7 @@
                 return; // Touch is outside this stick's area
             }
             
-            // Deactivate other stick to prevent conflicts
-            if (side === 'left') {
-                this.rightStick.active = false;
-                this.rightStick.element.classList.remove('active');
-            } else {
-                this.leftStick.active = false;
-                this.leftStick.element.classList.remove('active');
-            }
+            // Only left stick exists now, no conflicts to handle
             
             this.touchStartPos = {
                 x: touch.clientX - rect.left,
@@ -1367,129 +1439,21 @@
             };
         }
 
-        getRightStickInput() {
-            if (!this.rightStick.active) return { x: 0, y: 0 };
-            return {
-                x: this.rightStick.x / this.stickRadius,
-                y: this.rightStick.y / this.stickRadius
-            };
-        }
+
         
-        // Right stick shooting handlers
-        handleRightStickTouchStart(e, stick) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = stick.element.getBoundingClientRect();
-            
-            // Check if touch is within this stick's bounds
-            if (touch.clientX < rect.left || touch.clientX > rect.right || 
-                touch.clientY < rect.top || touch.clientY > rect.bottom) {
-                return; // Touch is outside this stick's area
-            }
-            
-            // Deactivate left stick to prevent conflicts
-            this.leftStick.active = false;
-            this.leftStick.element.classList.remove('active');
-            
-            this.touchStartPos = {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
-            };
-            stick.active = true;
-            stick.element.classList.add('active');
-            this.updateStickPosition(touch.clientX, touch.clientY, stick, 'right');
-            
-            // Start shooting
-            this.game.inputManager.mouse.down = true;
-            this.game.audioManager.init();
-        }
 
-        handleRightStickTouchMove(e, stick) {
-            e.preventDefault();
-            if (stick.active) {
-                const touch = e.touches[0];
-                const rect = stick.element.getBoundingClientRect();
-                
-                // Only update if touch is still within reasonable bounds
-                if (touch.clientX >= rect.left - 50 && touch.clientX <= rect.right + 50 && 
-                    touch.clientY >= rect.top - 50 && touch.clientY <= rect.bottom + 50) {
-                    this.updateStickPosition(touch.clientX, touch.clientY, stick, 'right');
-                    
-                    // Update aim direction for continuous shooting
-                    this.updateMobileAimDirection();
-                }
-            }
-        }
 
-        handleRightStickTouchEnd(e, stick) {
-            e.preventDefault();
-            stick.active = false;
-            stick.x = 0;
-            stick.y = 0;
-            stick.element.classList.remove('active');
-            this.updateStickVisual(stick);
-            
-            // Stop shooting
-            this.game.inputManager.mouse.down = false;
-            this.game.weaponSystem.resetWeaponStates();
-        }
 
-        handleRightStickMouseDown(e, stick) {
-            e.preventDefault();
-            const rect = stick.element.getBoundingClientRect();
-            this.touchStartPos = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-            stick.active = true;
-            stick.element.classList.add('active');
-            this.updateStickPosition(e.clientX, e.clientY, stick, 'right');
-            
-            // Start shooting
-            this.game.inputManager.mouse.down = true;
-            this.game.audioManager.init();
-        }
 
-        handleRightStickMouseMove(e, stick) {
-            if (stick.active) {
-                this.updateStickPosition(e.clientX, e.clientY, stick, 'right');
-                
-                // Update aim direction for continuous shooting
-                this.updateMobileAimDirection();
-            }
-        }
 
-        handleRightStickMouseUp(e, stick) {
-            stick.active = false;
-            stick.x = 0;
-            stick.y = 0;
-            stick.element.classList.remove('active');
-            this.updateStickVisual(stick);
-            
-            // Stop shooting
-            this.game.inputManager.mouse.down = false;
-            this.game.weaponSystem.resetWeaponStates();
-        }
+
+
+
+
+
+
         
-        updateMobileAimDirection() {
-            if (!this.rightStick.active) return;
-            
-            const aimInput = this.getRightStickInput();
-            if (Math.abs(aimInput.x) > 0 || Math.abs(aimInput.y) > 0) {
-                // Update the mouse position for aiming based on right stick
-                const player = this.game.player;
-                const gunPos = this.game.weaponSystem.getGunPosition();
-                
-                // Calculate aim position relative to player
-                const aimDistance = 100; // Distance to project aim point
-                const aimX = gunPos.x + (aimInput.x * aimDistance);
-                const aimY = gunPos.y + (aimInput.y * aimDistance);
-                
-                // Update mouse position for weapon system
-                this.game.inputManager.mouse.x = aimX;
-                this.game.inputManager.mouse.y = aimY;
-            }
-        }
+
 
         show() {
             this.isActive = true;
@@ -1580,8 +1544,8 @@
             this.mouse.y = (e.clientY - rect.top) / scale;
             
             // Clamp to world bounds
-            this.mouse.x = Math.max(0, Math.min(CONFIG.WORLD_WIDTH, this.mouse.x));
-            this.mouse.y = Math.max(0, Math.min(CONFIG.WORLD_HEIGHT, this.mouse.y));
+            this.mouse.x = Math.max(0, Math.min(MobileDetector.getWorldWidth(), this.mouse.x));
+            this.mouse.y = Math.max(0, Math.min(MobileDetector.getWorldHeight(), this.mouse.y));
         }
         
         getMobileMovementInput() {
@@ -1589,10 +1553,7 @@
             return this.mobileInput.getLeftStickInput();
         }
         
-        getMobileAimInput() {
-            if (!this.mobileInput) return { x: 0, y: 0 };
-            return this.mobileInput.getRightStickInput();
-        }
+
         
         initializeMobileControls() {
             if (MobileDetector.isMobile() && !this.mobileInput) {
@@ -1613,8 +1574,8 @@
             const availableWidth = containerRect.width - (padding * 2);
             const availableHeight = containerRect.height - (padding * 2);
             
-            const scaleX = availableWidth / CONFIG.WORLD_WIDTH;
-            const scaleY = availableHeight / CONFIG.WORLD_HEIGHT;
+            const scaleX = availableWidth / MobileDetector.getWorldWidth();
+            const scaleY = availableHeight / MobileDetector.getWorldHeight();
             return Math.min(scaleX, scaleY, 1.0);
         }
 
@@ -1661,8 +1622,8 @@
                 this.mouse.y = (touch.clientY - rect.top) / scale;
                 
                 // Clamp to world bounds
-                this.mouse.x = Math.max(0, Math.min(CONFIG.WORLD_WIDTH, this.mouse.x));
-                this.mouse.y = Math.max(0, Math.min(CONFIG.WORLD_HEIGHT, this.mouse.y));
+                this.mouse.x = Math.max(0, Math.min(MobileDetector.getWorldWidth(), this.mouse.x));
+                this.mouse.y = Math.max(0, Math.min(MobileDetector.getWorldHeight(), this.mouse.y));
                 
                 this.handleMouseDown();
             }
@@ -1679,8 +1640,8 @@
                 this.mouse.y = (touch.clientY - rect.top) / scale;
                 
                 // Clamp to world bounds
-                this.mouse.x = Math.max(0, Math.min(CONFIG.WORLD_WIDTH, this.mouse.x));
-                this.mouse.y = Math.max(0, Math.min(CONFIG.WORLD_HEIGHT, this.mouse.y));
+                this.mouse.x = Math.max(0, Math.min(MobileDetector.getWorldWidth(), this.mouse.x));
+                this.mouse.y = Math.max(0, Math.min(MobileDetector.getWorldHeight(), this.mouse.y));
             }
         }
         
@@ -1743,7 +1704,7 @@
 
         update() {
             const input = this.game.inputManager;
-            const isShooting = input.mouse.down || (input.mobileInput && input.mobileInput.rightStick.active);
+            const isShooting = input.mouse.down;
             
             if (!isShooting) return;
 
@@ -1870,14 +1831,7 @@
         calculateFireDirection(gunPos) {
             const input = this.game.inputManager;
             
-            if (input.mobileInput && input.mobileInput.rightStick.active) {
-                // Mobile aim input from right stick
-                const aimInput = input.getMobileAimInput();
-                if (Math.abs(aimInput.x) > 0 || Math.abs(aimInput.y) > 0) {
-                    // Use right stick for aiming
-                    return Utils.normalizeVector(aimInput.x, aimInput.y);
-                }
-            }
+
             
             // Fallback to mouse input
             const mouse = input.mouse;
@@ -2211,7 +2165,7 @@
                 if (zombiesSpawned < zombieCount) {
                     const type = this.selectZombieType(waveNumber, zombiesSpawned);
                     console.log(`Spawning zombie ${zombiesSpawned + 1}/${zombieCount}: ${type}`);
-                    this.game.spawnZombie(CONFIG.WORLD_WIDTH + 50, type);
+                    this.game.spawnZombie(MobileDetector.getWorldWidth() + 50, type);
                     zombiesSpawned++;
                     
                     if (zombiesSpawned < zombieCount) {
@@ -2309,10 +2263,7 @@
             this.updateTimedEffect(this.waveAnnouncement, dt);
             this.updateHitEffects(dt);
             
-            // Update mobile aim direction continuously
-            if (this.game.inputManager.mobileInput && this.game.inputManager.mobileInput.rightStick.active) {
-                this.game.inputManager.mobileInput.updateMobileAimDirection();
-            }
+
         }
 
         updateScreenShake(dt) {
@@ -2410,24 +2361,26 @@
         }
 
         clearScreen() {
-            this.ctx.clearRect(0, 0, CONFIG.WORLD_WIDTH, CONFIG.WORLD_HEIGHT);
+            this.ctx.clearRect(0, 0, MobileDetector.getWorldWidth(), MobileDetector.getWorldHeight());
         }
 
         renderBackground() {
             this.ctx.fillStyle = PALETTE.black;
-            this.ctx.fillRect(0, 0, CONFIG.WORLD_WIDTH, CONFIG.WORLD_HEIGHT);
+            this.ctx.fillRect(0, 0, MobileDetector.getWorldWidth(), MobileDetector.getWorldHeight());
             this.renderClouds();
         }
 
         renderClouds() {
-            const baseY = CONFIG.WORLD_HEIGHT * 0.25;
+            const worldHeight = MobileDetector.getWorldHeight();
+            const worldWidth = MobileDetector.getWorldWidth();
+            const baseY = worldHeight * 0.25;
             this.cloudOffset += CONFIG.CLOUD_SPEED;
             
             let cloudsVisible = 0;
             
             for (let i = 0; i < this.clouds.length; i++) {
-                const cloudX = (i * CONFIG.CLOUD_SPACING - this.cloudOffset + CONFIG.WORLD_WIDTH + 200);
-                if (cloudX > -400 && cloudX < CONFIG.WORLD_WIDTH + 400) {
+                const cloudX = (i * CONFIG.CLOUD_SPACING - this.cloudOffset + worldWidth + 200);
+                if (cloudX > -400 && cloudX < worldWidth + 400) {
                     const variation = Math.sin(cloudX * 0.01) * 15;
                     this.drawCloudSprite(this.clouds[i], cloudX, baseY + variation);
                     cloudsVisible++;
@@ -2466,19 +2419,21 @@
         }
 
         renderGround() {
-            const y = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT;
+            const worldHeight = MobileDetector.getWorldHeight();
+            const worldWidth = MobileDetector.getWorldWidth();
+            const y = worldHeight - CONFIG.GROUND_HEIGHT;
 
             this.ctx.fillStyle = '#3d2b1f';
-            this.ctx.fillRect(0, y + 20, CONFIG.WORLD_WIDTH, 20);
+            this.ctx.fillRect(0, y + 20, worldWidth, 20);
 
             this.ctx.fillStyle = '#2d4a2d';
-            this.ctx.fillRect(0, y + 10, CONFIG.WORLD_WIDTH, 10);
+            this.ctx.fillRect(0, y + 10, worldWidth, 10);
 
             this.ctx.fillStyle = '#4a7c59';
-            this.ctx.fillRect(0, y, CONFIG.WORLD_WIDTH, 10);
+            this.ctx.fillRect(0, y, worldWidth, 10);
 
             this.ctx.fillStyle = PALETTE.outline;
-            this.ctx.fillRect(0, y - 1, CONFIG.WORLD_WIDTH, 1);
+            this.ctx.fillRect(0, y - 1, worldWidth, 1);
         }
 
         renderEntities(shake) {
@@ -2623,8 +2578,8 @@
             this.ctx.textBaseline = 'middle';
             this.ctx.globalAlpha = Math.min(1, announcement.timer / 0.5);
             
-            const centerX = CONFIG.WORLD_WIDTH / 2;
-            const centerY = CONFIG.WORLD_HEIGHT / 2;
+            const centerX = MobileDetector.getWorldWidth() / 2;
+            const centerY = MobileDetector.getWorldHeight() / 2;
             
             this.ctx.fillStyle = PALETTE.black;
             this.ctx.fillText(announcement.text, centerX + 2, centerY + 2);
@@ -2863,16 +2818,16 @@
         renderDebugInfo() {
             this.ctx.fillStyle = '#666';
             this.ctx.font = '10px monospace';
-            this.ctx.fillText(`v${CONFIG.GAME_VERSION}`, CONFIG.WORLD_WIDTH - 80, 20);
+            this.ctx.fillText(`v${CONFIG.GAME_VERSION}`, MobileDetector.getWorldWidth() - 80, 20);
             
             // Add scale and window info
             if (this.game.currentScale !== undefined) {
                 this.ctx.font = 'bold 14px "Courier New", monospace';
                 this.ctx.textBaseline = 'top';
                 this.ctx.fillStyle = '#666';
-                this.ctx.fillText(`Scale: ${this.game.currentScale.toFixed(2)}`, CONFIG.WORLD_WIDTH - 80, 35);
-                this.ctx.fillText(`Window: ${window.innerWidth}x${window.innerHeight}`, CONFIG.WORLD_WIDTH - 80, 50);
-                this.ctx.fillText(`Mouse: ${Math.round(this.game.inputManager.mouse.x)},${Math.round(this.game.inputManager.mouse.y)}`, CONFIG.WORLD_WIDTH - 80, 65);
+                this.ctx.fillText(`Scale: ${this.game.currentScale.toFixed(2)}`, MobileDetector.getWorldWidth() - 80, 35);
+                this.ctx.fillText(`Window: ${window.innerWidth}x${window.innerHeight}`, MobileDetector.getWorldWidth() - 80, 50);
+                this.ctx.fillText(`Mouse: ${Math.round(this.game.inputManager.mouse.x)},${Math.round(this.game.inputManager.mouse.y)}`, MobileDetector.getWorldWidth() - 80, 65);
             }
             
             // Show debug info only when DEBUG_MODE is enabled
@@ -2913,18 +2868,21 @@
         }
 
         renderGameOver() {
+            const worldWidth = MobileDetector.getWorldWidth();
+            const worldHeight = MobileDetector.getWorldHeight();
+            
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            this.ctx.fillRect(0, 0, CONFIG.WORLD_WIDTH, CONFIG.WORLD_HEIGHT);
+            this.ctx.fillRect(0, 0, worldWidth, worldHeight);
 
             this.ctx.fillStyle = '#ff5555';
             this.ctx.font = 'bold 32px "Courier New", monospace';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
-            this.ctx.fillText('YOU DIED', CONFIG.WORLD_WIDTH / 2, CONFIG.WORLD_HEIGHT / 2);
+            this.ctx.fillText('YOU DIED', worldWidth / 2, worldHeight / 2);
 
             this.ctx.fillStyle = '#ccc';
             this.ctx.font = 'bold 18px "Courier New", monospace';
-            this.ctx.fillText('Press R or Space to restart', CONFIG.WORLD_WIDTH / 2, CONFIG.WORLD_HEIGHT / 2 + 40);
+            this.ctx.fillText('Press R or Space to restart', worldWidth / 2, worldHeight / 2 + 40);
         }
 
         drawSprite(sprite, x, y, width, height) {
@@ -3048,14 +3006,14 @@
             // Apply movement
             player.velocityX += (moveDir * CONFIG.PLAYER_MOVE_SPEED - player.velocityX) * 0.4;
             player.x += player.velocityX * dt;
-            player.x = Utils.clamp(player.x, 0, CONFIG.WORLD_WIDTH - player.width);
+            player.x = Utils.clamp(player.x, 0, MobileDetector.getWorldWidth() - player.width);
 
             // Vertical movement (gravity)
             player.velocityY += CONFIG.GRAVITY * dt;
             player.y += player.velocityY * dt;
 
             // Ground collision
-            const groundY = Utils.getGroundY(CONFIG.WORLD_HEIGHT, player.height);
+            const groundY = Utils.getGroundY(MobileDetector.getWorldHeight(), player.height);
             if (player.y > groundY) {
                 player.y = groundY;
                 player.velocityY = 0;
@@ -3204,10 +3162,12 @@
         }
 
         shouldRemoveBullet(bullet) {
-            const groundY = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
+            const worldHeight = MobileDetector.getWorldHeight();
+            const worldWidth = MobileDetector.getWorldWidth();
+            const groundY = worldHeight - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
             
-            return bullet.x < -10 || bullet.x > CONFIG.WORLD_WIDTH + 10 ||
-                   bullet.y < -10 || bullet.y > CONFIG.WORLD_HEIGHT + 10 ||
+            return bullet.x < -10 || bullet.x > worldWidth + 10 ||
+                   bullet.y < -10 || bullet.y > worldHeight + 10 ||
                    bullet.y >= groundY;
         }
 
@@ -3237,10 +3197,12 @@
         }
 
         shouldRemoveProjectile(projectile) {
-            const groundY = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
+            const worldHeight = MobileDetector.getWorldHeight();
+            const worldWidth = MobileDetector.getWorldWidth();
+            const groundY = worldHeight - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
             
-            return projectile.x < -10 || projectile.x > CONFIG.WORLD_WIDTH + 10 ||
-                   projectile.y < -10 || projectile.y > CONFIG.WORLD_HEIGHT + 10 ||
+            return projectile.x < -10 || projectile.x > worldWidth + 10 ||
+                   projectile.y < -10 || projectile.y > worldHeight + 10 ||
                    projectile.y >= groundY;
         }
 
@@ -3277,7 +3239,7 @@
                 const dirX = Math.sign(distanceX);
                 zombie.velocityX = dirX * zombie.speed;
                 zombie.x += zombie.velocityX * dt;
-                zombie.x = Utils.clamp(zombie.x, 0, CONFIG.WORLD_WIDTH - zombie.width);
+                zombie.x = Utils.clamp(zombie.x, 0, MobileDetector.getWorldWidth() - zombie.width);
             } else {
                 this.handleZombieStuck(zombie, dt);
             }
@@ -3346,7 +3308,7 @@
         }
 
         keepZombieOnGround(zombie) {
-            zombie.y = Utils.getGroundY(CONFIG.WORLD_HEIGHT, zombie.height);
+            zombie.y = Utils.getGroundY(MobileDetector.getWorldHeight(), zombie.height);
         }
 
         checkZombiePlayerCollision(zombie) {
@@ -3515,9 +3477,9 @@
         }
 
         setupCanvas() {
-            // Set fixed world dimensions
-            this.canvas.width = CONFIG.WORLD_WIDTH;
-            this.canvas.height = CONFIG.WORLD_HEIGHT;
+            // Set world dimensions based on device type
+            this.canvas.width = MobileDetector.getWorldWidth();
+            this.canvas.height = MobileDetector.getWorldHeight();
             
             // Configure canvas for crisp rendering
             this.ctx.imageSmoothingEnabled = false;
@@ -3525,18 +3487,38 @@
             
             // Handle window resizing for scaling only
             this.handleWindowResize();
-            window.addEventListener('resize', () => this.handleWindowResize());
+            window.addEventListener('resize', () => {
+                if (MobileDetector.isMobile()) {
+                    // Update canvas dimensions for mobile when window resizes
+                    this.canvas.width = MobileDetector.getWorldWidth();
+                    this.canvas.height = MobileDetector.getWorldHeight();
+                    // Update rotation message visibility
+                    this.updateRotationMessageVisibility();
+                }
+                this.handleWindowResize();
+            });
             
             // Handle orientation change on mobile
             if (MobileDetector.isMobile()) {
                 window.addEventListener('orientationchange', () => {
-                    setTimeout(() => this.handleWindowResize(), 100);
+                    setTimeout(() => {
+                        // Update canvas dimensions for new orientation
+                        this.canvas.width = MobileDetector.getWorldWidth();
+                        this.canvas.height = MobileDetector.getWorldHeight();
+                        this.handleWindowResize();
+                        // Update rotation message visibility
+                        this.updateRotationMessageVisibility();
+                    }, 200);
                 });
             }
         }
 
         handleWindowResize() {
-            // Calculate the scale to fit the 1920x1080 world in the window
+            // Get current world dimensions based on device type
+            const worldWidth = MobileDetector.getWorldWidth();
+            const worldHeight = MobileDetector.getWorldHeight();
+            
+            // Calculate the scale to fit the world in the window
             let padding = 0;
             let availableWidth = window.innerWidth - (padding * 2);
             let availableHeight = window.innerHeight - (padding * 2);
@@ -3544,33 +3526,40 @@
             // Mobile-specific adjustments
             if (MobileDetector.isMobile()) {
                 // On mobile, we want to use more of the screen
+                availableWidth = window.innerWidth;
+                availableHeight = window.innerHeight;
+                
+                // In portrait mode, leave some space for UI elements
                 if (MobileDetector.isPortrait()) {
-                    // Portrait mode - scale to fit width
-                    availableWidth = window.innerWidth;
-                    availableHeight = window.innerHeight;
-                } else {
-                    // Landscape mode - scale to fit height
-                    availableWidth = window.innerWidth;
-                    availableHeight = window.innerHeight;
+                    availableHeight = window.innerHeight - 100; // Reserve space for controls
                 }
             }
             
-            const scaleX = availableWidth / CONFIG.WORLD_WIDTH;
-            const scaleY = availableHeight / CONFIG.WORLD_HEIGHT;
+            const scaleX = availableWidth / worldWidth;
+            const scaleY = availableHeight / worldHeight;
             let scale = Math.min(scaleX, scaleY, 1.0); // Don't scale up beyond 1x for crisp pixels
             
             // Mobile-specific scaling adjustments
             if (MobileDetector.isMobile()) {
-                // Allow slight scaling up on mobile for better visibility
-                scale = Math.min(scaleX, scaleY, 1.2);
+                // Allow scaling up on mobile for better visibility
+                scale = Math.min(scaleX, scaleY, 1.5);
                 
-                // Ensure minimum scale for mobile
-                if (scale < 0.3) scale = 0.3;
+                // In portrait mode, ensure the game fits properly
+                if (MobileDetector.isPortrait()) {
+                    // Scale down more aggressively in portrait to prevent cropping
+                    scale = Math.min(scaleX, scaleY, 0.8);
+                    
+                    // Ensure minimum scale for portrait
+                    if (scale < 0.3) scale = 0.3;
+                } else {
+                    // Ensure minimum scale for landscape
+                    if (scale < 0.5) scale = 0.5;
+                }
             }
             
             // Calculate position to center the canvas
-            const scaledWidth = CONFIG.WORLD_WIDTH * scale;
-            const scaledHeight = CONFIG.WORLD_HEIGHT * scale;
+            const scaledWidth = worldWidth * scale;
+            const scaledHeight = worldHeight * scale;
             const left = (window.innerWidth - scaledWidth) / 2;
             const top = (window.innerHeight - scaledHeight) / 2;
             
@@ -3600,26 +3589,21 @@
             
             const controls = document.getElementById('mobileControls');
             const leftStick = document.getElementById('leftStick');
-            const rightStick = document.getElementById('rightStick');
             const mobileButtons = document.querySelector('.mobile-buttons');
             
             // Adjust positioning based on screen size and orientation
             if (MobileDetector.isPortrait()) {
-                // Portrait mode - stack controls vertically
+                // Portrait mode - position controls for tall screen
                 leftStick.style.bottom = '20px';
                 leftStick.style.left = '20px';
-                rightStick.style.bottom = '20px';
-                rightStick.style.right = '20px';
                 mobileButtons.style.bottom = '170px';
                 mobileButtons.style.right = '20px';
             } else {
-                // Landscape mode - spread controls out
-                leftStick.style.bottom = '30px';
-                leftStick.style.left = '30px';
-                rightStick.style.bottom = '30px';
-                rightStick.style.right = '30px';
-                mobileButtons.style.bottom = '190px';
-                mobileButtons.style.right = '30px';
+                // Landscape mode - position controls for wide screen
+                leftStick.style.bottom = '20px';
+                leftStick.style.left = '20px';
+                mobileButtons.style.bottom = '120px';
+                mobileButtons.style.right = '20px';
             }
         }
         
@@ -3641,7 +3625,23 @@
             // Update mobile controls position
             this.updateMobileControlsPosition();
             
+            // Handle rotation message visibility
+            this.updateRotationMessageVisibility();
+            
             console.log('Mobile features initialized');
+        }
+        
+        updateRotationMessageVisibility() {
+            if (!MobileDetector.isMobile()) return;
+            
+            const rotationMessage = document.getElementById('rotationMessage');
+            if (!rotationMessage) return;
+            
+            if (MobileDetector.isPortrait()) {
+                rotationMessage.style.display = 'flex';
+            } else {
+                rotationMessage.style.display = 'none';
+            }
         }
 
         updatePositionsAfterResize() {
@@ -3651,9 +3651,9 @@
 
         setupInitialPositions() {
             // Use fixed world dimensions from CONFIG
-            this.player.x = Math.min(CONFIG.PLAYER_START_X, CONFIG.WORLD_WIDTH - 200);
+            this.player.x = Math.min(CONFIG.PLAYER_START_X, MobileDetector.getWorldWidth() - 200);
             
-            const groundY = Utils.getGroundY(CONFIG.WORLD_HEIGHT, this.player.height);
+            const groundY = Utils.getGroundY(MobileDetector.getWorldHeight(), this.player.height);
             this.player.y = groundY;
             this.player.onGround = true;
             this.player.velocityY = 0;
@@ -3678,7 +3678,7 @@
             const zombie = EntityFactory.createZombie(x, type);
             if (zombie) {
                 console.log(`Zombie created successfully:`, zombie);
-                zombie.y = Utils.getGroundY(CONFIG.WORLD_HEIGHT, zombie.height);
+                zombie.y = Utils.getGroundY(MobileDetector.getWorldHeight(), zombie.height);
                 this.zombies.push(zombie);
                 console.log(`Zombie added to game. Total zombies: ${this.zombies.length}`);
             } else {
