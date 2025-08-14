@@ -572,9 +572,9 @@
         <div class="analog-stick left" id="leftStick"></div>
         <div class="mobile-buttons">
             <div class="mobile-button jump" id="jumpButton">JUMP</div>
-            <div class="mobile-button reload" id="reloadButton">R</div>
+            <div class="mobile-button reload" id="reloadButton">RELOAD</div>
             <div class="mobile-button shop" id="shopButton">SHOP</div>
-            <div class="mobile-button weapon" id="weaponButton">1</div>
+            <div class="mobile-button weapon" id="weaponButton">WEAPON</div>
         </div>
     </div>
     
@@ -1305,9 +1305,9 @@
             // Switch to the next weapon
             weaponSystem.switchSlot(nextSlot);
             
-            // Update the button label to show current weapon number
+            // Update the button label to show more intuitive text
             const weaponButton = document.getElementById('weaponButton');
-            weaponButton.textContent = (nextIndex + 1).toString();
+            weaponButton.textContent = 'WEAPON';
             
             // Add visual feedback
             weaponButton.style.background = 'rgba(255, 213, 74, 0.3)';
@@ -1464,12 +1464,8 @@
         }
         
         updateWeaponButtonLabel() {
-            const weaponSystem = this.game.weaponSystem;
-            const currentSlot = weaponSystem.currentSlot;
-            const weaponOrder = ['primary', 'secondary', 'melee'];
-            const currentIndex = weaponOrder.indexOf(currentSlot);
             const weaponButton = document.getElementById('weaponButton');
-            weaponButton.textContent = (currentIndex + 1).toString();
+            weaponButton.textContent = 'WEAPON';
         }
 
         hide() {
@@ -1613,6 +1609,13 @@
         
         handleTouchStart(e) {
             e.preventDefault();
+            
+            // Check if game is over and can restart
+            if (this.game.gameOver && this.game.canRestart) {
+                this.handleRestart();
+                return;
+            }
+            
             if (e.touches.length === 1) {
                 const touch = e.touches[0];
                 const rect = this.game.canvas.getBoundingClientRect();
@@ -2087,7 +2090,24 @@
 
         initializeUI() {
             const button = document.getElementById('waveControl');
-            button.addEventListener('click', () => this.toggleGameStage());
+            
+            // Use mousedown instead of click to prevent spacebar activation
+            button.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.toggleGameStage();
+            });
+            
+            // Prevent button from receiving focus (which would allow spacebar activation)
+            button.addEventListener('focus', (e) => {
+                e.target.blur();
+            });
+            
+            // Prevent keyboard events on the button
+            button.addEventListener('keydown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
             this.updateButtonState();
         }
 
@@ -2635,9 +2655,13 @@
 
         renderPlayerHealthBar() {
             const player = this.game.player;
+            const isMobile = MobileDetector.isMobile();
+            
+            // Mobile-responsive positioning and sizing
             const x = 10;
             const y = 20;
-            const width = CONFIG.HP_BAR_WIDTH;
+            const maxWidth = isMobile ? Math.min(CONFIG.HP_BAR_WIDTH, MobileDetector.getWorldWidth() - 60) : CONFIG.HP_BAR_WIDTH;
+            const width = Math.max(180, maxWidth); // Minimum width of 180px
             const height = CONFIG.HP_BAR_HEIGHT;
 
             this.ctx.fillStyle = '#111';
@@ -2654,17 +2678,37 @@
         renderWeaponSlots() {
             const slots = ['primary', 'secondary', 'melee'];
             const weaponSystem = this.game.weaponSystem;
+            const isMobile = MobileDetector.isMobile();
+            const worldWidth = MobileDetector.getWorldWidth();
             
-            // Table structure: 3 columns (weapons) x 3 rows (label, name, ammo)
-            // Position to the right of the health bar (health bar ends at x = 270)
-            const tableX = 290;  // 10 + 260 + 20 (health bar start + width + spacing)
+            // Mobile-responsive positioning and sizing
+            let tableX, colWidth;
+            
+            if (isMobile) {
+                // On mobile, calculate optimal column width based on font metrics
+                const healthBarEnd = 10 + Math.max(180, Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60));
+                tableX = healthBarEnd + 10;  // Smaller spacing after health bar
+                
+                // Calculate width based on content and font size
+                // "2. SECONDARY" is typically the longest label text
+                // Using Courier New 16px bold, approximate 9px per character
+                const maxLabelChars = 12; // "2. SECONDARY" = 12 characters
+                const charWidth = 9; // Courier New 16px approximate width
+                const padding = 10; // Small padding for readability
+                colWidth = (maxLabelChars * charWidth) + padding; // ~118px
+            } else {
+                // Desktop: Position to the right of the health bar (health bar ends at x = 270)
+                tableX = 290;  // 10 + 260 + 20 (health bar start + width + spacing)
+                colWidth = 200;  // Width of each column
+            }
+            
             const tableY = 20;   // Same top padding as health bar
-            const colWidth = 200;  // Width of each column
             const rowHeight = 20;  // Height of each row
+            const columnSpacing = isMobile ? 8 : 0; // Add spacing between columns on mobile
             
             // Render each column (weapon slot)
             slots.forEach((slot, colIndex) => {
-                const x = tableX + (colIndex * colWidth);
+                const x = tableX + (colIndex * (colWidth + columnSpacing));
                 
                 // Row 1: Slot labels (PRIMARY, SECONDARY, MELEE)
                 this.renderSlotLabel(slot, colIndex, x, tableY, weaponSystem, colWidth, rowHeight);
@@ -2783,15 +2827,39 @@
         }
 
         renderWaveInfo() {
-            // Position to the right of the weapon HUD with consistent spacing
-            // Weapon HUD: starts at x=290, width=600px, ends at x=890
-            const waveX = 920;  // 890 + 20 (weapon HUD end + spacing)
-            const waveY = 20;   // Same top padding as health bar and weapon HUD
+            const isMobile = MobileDetector.isMobile();
+            const worldWidth = MobileDetector.getWorldWidth();
+            
+            // Mobile-responsive positioning
+            let waveX, waveY;
+            
+            if (isMobile) {
+                // On mobile, position right after the weapon HUD
+                const healthBarEnd = 10 + Math.max(180, Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60));
+                const weaponHudStart = healthBarEnd + 10;
+                const weaponColWidth = (12 * 9) + 10; // Same calculation as in renderWeaponSlots
+                const columnSpacing = 8; // Same spacing as in renderWeaponSlots
+                const weaponHudEnd = weaponHudStart + (weaponColWidth * 3) + (columnSpacing * 2); // 3 columns + 2 spacings
+                
+                waveX = weaponHudEnd + 15;  // 15px spacing after weapon HUD
+                waveY = 20;  // Same top padding as health bar
+            } else {
+                // Desktop: Position to the right of the weapon HUD with consistent spacing
+                // Weapon HUD: starts at x=290, width=600px, ends at x=890
+                waveX = 920;  // 890 + 20 (weapon HUD end + spacing)
+                waveY = 20;   // Same top padding as health bar and weapon HUD
+            }
             
             this.ctx.save();
             this.ctx.fillStyle = '#ffd54a';
             this.ctx.font = 'bold 16px "Courier New", monospace';
             this.ctx.textBaseline = 'top';
+            
+            // Use left-aligned text on mobile since we're positioning it after weapon HUD
+            if (!isMobile) {
+                this.ctx.textAlign = 'left';
+            }
+            
             this.ctx.fillText(`WAVE ${this.game.waveSystem.currentWave}`, waveX, waveY);
             this.ctx.restore();
         }
@@ -2870,6 +2938,7 @@
         renderGameOver() {
             const worldWidth = MobileDetector.getWorldWidth();
             const worldHeight = MobileDetector.getWorldHeight();
+            const isMobile = MobileDetector.isMobile();
             
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
             this.ctx.fillRect(0, 0, worldWidth, worldHeight);
@@ -2882,7 +2951,10 @@
 
             this.ctx.fillStyle = '#ccc';
             this.ctx.font = 'bold 18px "Courier New", monospace';
-            this.ctx.fillText('Press R or Space to restart', worldWidth / 2, worldHeight / 2 + 40);
+            
+            // Show appropriate restart instruction based on device type
+            const restartText = isMobile ? 'Touch screen to restart' : 'Press Space to restart';
+            this.ctx.fillText(restartText, worldWidth / 2, worldHeight / 2 + 40);
         }
 
         drawSprite(sprite, x, y, width, height) {
@@ -3732,6 +3804,12 @@
             this.weaponSystem.currentSlot = 'secondary';
             this.waveSystem.reset();
             this.shopSystem.closeShop();
+            
+            // Ensure all zombies are cleared and game is in peaceful mode
+            this.zombies = [];
+            this.bullets = [];
+            this.acidProjectiles = [];
+            
             this.setupInitialPositions();
             
             // Ensure canvas is properly scaled after restart
