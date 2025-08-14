@@ -24,6 +24,17 @@
             font-family: monospace;
         }
 
+        /* Mobile-specific body adjustments */
+        @media (max-width: 767px) {
+            html, body {
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
         /* =====================================================
            GAME CANVAS
            ===================================================== */
@@ -35,6 +46,18 @@
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
+        }
+
+        /* Mobile-specific canvas adjustments */
+        @media (max-width: 767px) {
+            #gameCanvas {
+                width: 100%;
+                height: 100%;
+                position: fixed;
+                top: 0;
+                left: 0;
+                touch-action: none; /* Prevents default touch behaviors */
+            }
         }
 
         /* =====================================================
@@ -2835,6 +2858,11 @@
         setupCanvas() {
             this.resizeCanvas();
             window.addEventListener('resize', () => this.resizeCanvas());
+            
+            // Add visual viewport listener for mobile devices
+            if (this.isMobileDevice() && window.visualViewport) {
+                window.visualViewport.addEventListener('resize', () => this.resizeCanvas());
+            }
         }
 
         initMobileOrientation() {
@@ -2907,8 +2935,14 @@
         resizeCanvas() {
             const oldWidth = this.canvas.width;
 
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight;
+            // Use visual viewport for mobile devices to handle browser UI elements
+            if (this.isMobileDevice() && window.visualViewport) {
+                this.canvas.width = window.visualViewport.width;
+                this.canvas.height = window.visualViewport.height;
+            } else {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
 
             if (this.player && this.canvas.width < oldWidth) {
                 this.player.x = Math.min(this.player.x, this.canvas.width - 100);
