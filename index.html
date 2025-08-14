@@ -58,13 +58,7 @@
             -moz-osx-font-smoothing: unset;
         }
 
-        /* Mobile 720p resolution override */
-        @media (max-width: 768px) and (pointer: coarse), (max-height: 768px) and (pointer: coarse) {
-            #gameCanvas {
-                width: 1280px;
-                height: 720px;
-            }
-        }
+        /* Mobile canvas will be sized dynamically via JavaScript */
 
         /* =====================================================
            MOBILE CONTROLS
@@ -571,7 +565,6 @@
     <div class="mobile-controls" id="mobileControls">
         <div class="analog-stick left" id="leftStick"></div>
         <div class="mobile-buttons">
-            <div class="mobile-button jump" id="jumpButton">JUMP</div>
             <div class="mobile-button reload" id="reloadButton">RELOAD</div>
             <div class="mobile-button shop" id="shopButton">SHOP</div>
             <div class="mobile-button weapon" id="weaponButton">WEAPON</div>
@@ -611,9 +604,9 @@
         WORLD_WIDTH: 1920,
         WORLD_HEIGHT: 1080,
         
-        // Mobile World (720p)
-        MOBILE_WORLD_WIDTH: 1280,
-        MOBILE_WORLD_HEIGHT: 720,
+        // Mobile World (optimized for mobile screens)
+        MOBILE_WORLD_WIDTH: 915,
+        MOBILE_WORLD_HEIGHT: 412,
         GROUND_HEIGHT: 40,
         GROUND_COLLISION_OFFSET: -6,
         
@@ -1050,23 +1043,15 @@
         static getWorldWidth() {
             if (!this.isMobile()) return CONFIG.WORLD_WIDTH;
             
-            // For mobile, adjust dimensions based on orientation
-            if (this.isPortrait()) {
-                return CONFIG.MOBILE_WORLD_WIDTH;  // 1280 for portrait
-            } else {
-                return 1280; // Use 1280 width for landscape (16:9 aspect ratio)
-            }
+            // For mobile, use actual screen width for perfect fit
+            return window.innerWidth;
         }
         
         static getWorldHeight() {
             if (!this.isMobile()) return CONFIG.WORLD_HEIGHT;
             
-            // For mobile, adjust dimensions based on orientation
-            if (this.isPortrait()) {
-                return CONFIG.MOBILE_WORLD_HEIGHT; // 720 for portrait
-            } else {
-                return 720; // Use 720 height for landscape (16:9 aspect ratio)
-            }
+            // For mobile, use actual screen height for perfect fit
+            return window.innerHeight;
         }
     }
 
@@ -1265,10 +1250,6 @@
         }
 
         initMobileButtons() {
-            document.getElementById('jumpButton').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.game.inputManager.handleJump();
-            });
             
             document.getElementById('reloadButton').addEventListener('touchstart', (e) => {
                 e.preventDefault();
@@ -1286,7 +1267,6 @@
             });
             
             // Mouse events for testing
-            document.getElementById('jumpButton').addEventListener('click', () => this.game.inputManager.handleJump());
             document.getElementById('reloadButton').addEventListener('click', () => this.game.inputManager.handleReload());
             document.getElementById('shopButton').addEventListener('click', () => this.game.shopSystem.tryOpenShop());
             document.getElementById('weaponButton').addEventListener('click', () => this.cycleWeaponSlot());
@@ -1359,6 +1339,7 @@
             stick.active = false;
             stick.x = 0;
             stick.y = 0;
+            stick.hasJumped = false; // Reset jump flag
             stick.element.classList.remove('active');
             this.updateStickVisual(stick);
         }
@@ -1385,6 +1366,7 @@
             stick.active = false;
             stick.x = 0;
             stick.y = 0;
+            stick.hasJumped = false; // Reset jump flag
             stick.element.classList.remove('active');
             this.updateStickVisual(stick);
         }
@@ -1411,6 +1393,18 @@
             if (Math.abs(stick.x) < CONFIG.MOBILE_ANALOG_DEADZONE * this.stickRadius) stick.x = 0;
             if (Math.abs(stick.y) < CONFIG.MOBILE_ANALOG_DEADZONE * this.stickRadius) stick.y = 0;
             
+            // Handle jumping when moving stick upward (negative Y)
+            if (side === 'left' && stick.y < -this.stickRadius * 0.5) {
+                // Only jump if we haven't already detected a jump for this stick session
+                if (!stick.hasJumped) {
+                    this.game.inputManager.handleJump();
+                    stick.hasJumped = true;
+                }
+            } else if (stick.y >= -this.stickRadius * 0.3) {
+                // Reset jump flag when stick is not pointing strongly upward
+                stick.hasJumped = false;
+            }
+            
             this.updateStickVisual(stick);
         }
 
@@ -1435,7 +1429,7 @@
             if (!this.leftStick.active) return { x: 0, y: 0 };
             return {
                 x: this.leftStick.x / this.stickRadius,
-                y: this.leftStick.y / this.stickRadius
+                y: 0 // Y component handled separately for jumping
             };
         }
 
@@ -2684,9 +2678,9 @@
             const player = this.game.player;
             const isMobile = MobileDetector.isMobile();
             
-            // Mobile-responsive positioning and sizing
-            const x = 10;
-            const y = isMobile ? 70 : 20; // Add 50px offset on mobile for browser UI
+            // Mobile-responsive positioning and sizing - removed padding
+            const x = 0;
+            const y = 0;
             const maxWidth = isMobile ? Math.min(CONFIG.HP_BAR_WIDTH, MobileDetector.getWorldWidth() - 60) : CONFIG.HP_BAR_WIDTH;
             const width = Math.max(180, maxWidth); // Minimum width of 180px
             const height = CONFIG.HP_BAR_HEIGHT;
@@ -2713,8 +2707,8 @@
             
             if (isMobile) {
                 // On mobile, calculate optimal column width based on font metrics
-                const healthBarEnd = 10 + Math.max(180, Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60));
-                tableX = healthBarEnd + 10;  // Smaller spacing after health bar
+                const healthBarEnd = Math.max(180, Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60));
+                tableX = healthBarEnd;  // No spacing after health bar
                 
                 // Calculate width based on content and font size
                 // "2. SECONDARY" is typically the longest label text
@@ -2724,12 +2718,12 @@
                 const padding = 10; // Small padding for readability
                 colWidth = (maxLabelChars * charWidth) + padding; // ~118px
             } else {
-                // Desktop: Position to the right of the health bar (health bar ends at x = 270)
-                tableX = 290;  // 10 + 260 + 20 (health bar start + width + spacing)
+                // Desktop: Position to the right of the health bar (health bar ends at x = 260)
+                tableX = 260;  // 0 + 260 (health bar start + width)
                 colWidth = 200;  // Width of each column
             }
             
-            const tableY = isMobile ? 70 : 20;   // Same top padding as health bar, adjusted for mobile
+            const tableY = 0;   // No padding, aligned with health bar
             const rowHeight = 20;  // Height of each row
             const columnSpacing = isMobile ? 8 : 0; // Add spacing between columns on mobile
             
@@ -2862,19 +2856,19 @@
             
             if (isMobile) {
                 // On mobile, position right after the weapon HUD
-                const healthBarEnd = 10 + Math.max(180, Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60));
-                const weaponHudStart = healthBarEnd + 10;
+                const healthBarEnd = Math.max(180, Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60));
+                const weaponHudStart = healthBarEnd;
                 const weaponColWidth = (12 * 9) + 10; // Same calculation as in renderWeaponSlots
                 const columnSpacing = 8; // Same spacing as in renderWeaponSlots
                 const weaponHudEnd = weaponHudStart + (weaponColWidth * 3) + (columnSpacing * 2); // 3 columns + 2 spacings
                 
-                waveX = weaponHudEnd + 15;  // 15px spacing after weapon HUD
-                waveY = 70;  // Same top padding as health bar, adjusted for mobile
+                waveX = weaponHudEnd;  // No spacing after weapon HUD
+                waveY = 0;  // No padding, aligned with health bar
             } else {
-                // Desktop: Position to the right of the weapon HUD with consistent spacing
-                // Weapon HUD: starts at x=290, width=600px, ends at x=890
-                waveX = 920;  // 890 + 20 (weapon HUD end + spacing)
-                waveY = 20;   // Same top padding as health bar and weapon HUD
+                // Desktop: Position to the right of the weapon HUD
+                // Weapon HUD: starts at x=260, width=600px, ends at x=860
+                waveX = 860;  // weapon HUD end
+                waveY = 0;   // No padding, aligned with health bar and weapon HUD
             }
             
             this.ctx.save();
@@ -3530,7 +3524,9 @@
             this.deltaTime = 0;
             this.timeElapsed = 0;
             
-            setTimeout(() => this.setupInitialPositions(), CONFIG.INITIAL_SETUP_DELAY);
+            // Use longer delay for mobile to ensure canvas dimensions are fully set
+            const setupDelay = MobileDetector.isMobile() ? CONFIG.INITIAL_SETUP_DELAY * 3 : CONFIG.INITIAL_SETUP_DELAY;
+            setTimeout(() => this.setupInitialPositions(), setupDelay);
             setTimeout(() => this.hideLoadingScreen(), CONFIG.LOADING_HIDE_DELAY);
             
             // Mobile-specific initialization
@@ -3580,6 +3576,12 @@
             this.canvas.width = MobileDetector.getWorldWidth();
             this.canvas.height = MobileDetector.getWorldHeight();
             
+            // Set CSS dimensions for mobile to ensure proper display
+            if (MobileDetector.isMobile()) {
+                this.canvas.style.width = `${this.canvas.width}px`;
+                this.canvas.style.height = `${this.canvas.height}px`;
+            }
+            
             // Configure canvas for crisp rendering
             this.ctx.imageSmoothingEnabled = false;
             this.ctx.textRenderingOptimization = 'optimizeSpeed';
@@ -3591,8 +3593,13 @@
                     // Update canvas dimensions for mobile when window resizes
                     this.canvas.width = MobileDetector.getWorldWidth();
                     this.canvas.height = MobileDetector.getWorldHeight();
+                    // Update CSS dimensions to match
+                    this.canvas.style.width = `${this.canvas.width}px`;
+                    this.canvas.style.height = `${this.canvas.height}px`;
                     // Update rotation message visibility
                     this.updateRotationMessageVisibility();
+                    // Reposition merchant for new screen dimensions
+                    this.repositionMerchantForMobile();
                 }
                 this.handleWindowResize();
             });
@@ -3604,9 +3611,14 @@
                         // Update canvas dimensions for new orientation
                         this.canvas.width = MobileDetector.getWorldWidth();
                         this.canvas.height = MobileDetector.getWorldHeight();
+                        // Update CSS dimensions to match
+                        this.canvas.style.width = `${this.canvas.width}px`;
+                        this.canvas.style.height = `${this.canvas.height}px`;
                         this.handleWindowResize();
                         // Update rotation message visibility
                         this.updateRotationMessageVisibility();
+                        // Reposition merchant for new orientation
+                        this.repositionMerchantForMobile();
                     }, 200);
                 });
             }
@@ -3636,29 +3648,21 @@
             
             const scaleX = availableWidth / worldWidth;
             const scaleY = availableHeight / worldHeight;
-            let scale = Math.min(scaleX, scaleY, 1.0); // Don't scale up beyond 1x for crisp pixels
+            let scale;
             
-            // Mobile-specific scaling adjustments
             if (MobileDetector.isMobile()) {
-                // Allow scaling up on mobile for better visibility
-                scale = Math.min(scaleX, scaleY, 1.5);
-                
-                // In portrait mode, ensure the game fits properly
-                if (MobileDetector.isPortrait()) {
-                    // Scale down more aggressively in portrait to prevent cropping
-                    scale = Math.min(scaleX, scaleY, 0.8);
-                    
-                    // Ensure minimum scale for portrait
-                    if (scale < 0.3) scale = 0.3;
-                } else {
-                    // Ensure minimum scale for landscape
-                    if (scale < 0.5) scale = 0.5;
-                }
+                // On mobile, use 1:1 scaling for crisp graphics and no black bars
+                scale = 1.0;
+            } else {
+                // Desktop: maintain aspect ratio and don't scale up beyond 1x for crisp pixels
+                scale = Math.min(scaleX, scaleY, 1.0);
             }
             
-            // Calculate position to center the canvas
+            // Calculate position 
             const scaledWidth = worldWidth * scale;
             const scaledHeight = worldHeight * scale;
+            
+            // Center the canvas horizontally and vertically
             const left = (window.innerWidth - scaledWidth) / 2;
             const top = (window.innerHeight - scaledHeight) / 2;
             
@@ -3748,6 +3752,19 @@
             // But we keep it for compatibility and future use if needed
         }
 
+        repositionMerchantForMobile() {
+            if (!MobileDetector.isMobile()) return;
+            
+            // Recalculate merchant position for current screen dimensions
+            const worldWidth = MobileDetector.getWorldWidth();
+            const worldHeight = MobileDetector.getWorldHeight();
+            const groundY = Utils.getGroundY(worldHeight, this.shopSystem.merchant.height);
+            
+            const merchantX = Math.min(CONFIG.MERCHANT_X, worldWidth - this.shopSystem.merchant.width - 50);
+            this.shopSystem.merchant.x = Math.max(100, merchantX);
+            this.shopSystem.setMerchantPosition(groundY);
+        }
+
         setupInitialPositions() {
             // Use fixed world dimensions from CONFIG
             this.player.x = Math.min(CONFIG.PLAYER_START_X, MobileDetector.getWorldWidth() - 200);
@@ -3761,7 +3778,10 @@
             this.inputManager.mouse.x = this.player.x + this.player.width / 2;
             this.inputManager.mouse.y = this.player.y + this.player.height / 2;
 
-            this.shopSystem.merchant.x = CONFIG.MERCHANT_X;
+            // Position merchant safely within screen bounds for all devices
+            const worldWidth = MobileDetector.getWorldWidth();
+            const merchantX = Math.min(CONFIG.MERCHANT_X, worldWidth - this.shopSystem.merchant.width - 50);
+            this.shopSystem.merchant.x = Math.max(100, merchantX); // Ensure at least 100px from left edge
             this.shopSystem.setMerchantPosition(groundY);
             
             // Ensure canvas is properly scaled after positioning
