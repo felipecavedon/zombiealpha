@@ -1620,12 +1620,13 @@
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 
-                // Check if touch is within the movement stick area
+                // Check if touch is within the movement stick area (including extended drag zone)
                 if (this.mobileInput && this.mobileInput.leftStick.element) {
                     const stickRect = this.mobileInput.leftStick.element.getBoundingClientRect();
-                    if (touch.clientX >= stickRect.left && touch.clientX <= stickRect.right &&
-                        touch.clientY >= stickRect.top && touch.clientY <= stickRect.bottom) {
-                        continue; // Skip movement stick touches
+                    // Include the extended 50px boundary that the stick system uses
+                    if (touch.clientX >= stickRect.left - 50 && touch.clientX <= stickRect.right + 50 &&
+                        touch.clientY >= stickRect.top - 50 && touch.clientY <= stickRect.bottom + 50) {
+                        continue; // Skip movement stick touches (including extended drag area)
                     }
                 }
                 
@@ -1651,12 +1652,13 @@
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 
-                // Check if touch is within the movement stick area
+                // Check if touch is within the movement stick area (including extended drag zone)
                 if (this.mobileInput && this.mobileInput.leftStick.element) {
                     const stickRect = this.mobileInput.leftStick.element.getBoundingClientRect();
-                    if (touch.clientX >= stickRect.left && touch.clientX <= stickRect.right &&
-                        touch.clientY >= stickRect.top && touch.clientY <= stickRect.bottom) {
-                        continue; // Skip movement stick touches
+                    // Include the extended 50px boundary that the stick system uses
+                    if (touch.clientX >= stickRect.left - 50 && touch.clientX <= stickRect.right + 50 &&
+                        touch.clientY >= stickRect.top - 50 && touch.clientY <= stickRect.bottom + 50) {
+                        continue; // Skip movement stick touches (including extended drag area)
                     }
                 }
                 
