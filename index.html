@@ -126,11 +126,12 @@
 
         .mobile-buttons {
             position: absolute;
-            top: 30px;
+            bottom: 170px;
             right: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
             pointer-events: auto;
         }
 
@@ -1242,6 +1243,22 @@
             e.preventDefault();
             const touch = e.touches[0];
             const rect = stick.element.getBoundingClientRect();
+            
+            // Check if touch is within this stick's bounds
+            if (touch.clientX < rect.left || touch.clientX > rect.right || 
+                touch.clientY < rect.top || touch.clientY > rect.bottom) {
+                return; // Touch is outside this stick's area
+            }
+            
+            // Deactivate other stick to prevent conflicts
+            if (side === 'left') {
+                this.rightStick.active = false;
+                this.rightStick.element.classList.remove('active');
+            } else {
+                this.leftStick.active = false;
+                this.leftStick.element.classList.remove('active');
+            }
+            
             this.touchStartPos = {
                 x: touch.clientX - rect.left,
                 y: touch.clientY - rect.top
@@ -1255,7 +1272,13 @@
             e.preventDefault();
             if (stick.active) {
                 const touch = e.touches[0];
-                this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+                const rect = stick.element.getBoundingClientRect();
+                
+                // Only update if touch is still within reasonable bounds
+                if (touch.clientX >= rect.left - 50 && touch.clientX <= rect.right + 50 && 
+                    touch.clientY >= rect.top - 50 && touch.clientY <= rect.bottom + 50) {
+                    this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+                }
             }
         }
 
@@ -1357,6 +1380,17 @@
             e.preventDefault();
             const touch = e.touches[0];
             const rect = stick.element.getBoundingClientRect();
+            
+            // Check if touch is within this stick's bounds
+            if (touch.clientX < rect.left || touch.clientX > rect.right || 
+                touch.clientY < rect.top || touch.clientY > rect.bottom) {
+                return; // Touch is outside this stick's area
+            }
+            
+            // Deactivate left stick to prevent conflicts
+            this.leftStick.active = false;
+            this.leftStick.element.classList.remove('active');
+            
             this.touchStartPos = {
                 x: touch.clientX - rect.left,
                 y: touch.clientY - rect.top
@@ -1374,10 +1408,16 @@
             e.preventDefault();
             if (stick.active) {
                 const touch = e.touches[0];
-                this.updateStickPosition(touch.clientX, touch.clientY, stick, 'right');
+                const rect = stick.element.getBoundingClientRect();
                 
-                // Update aim direction for continuous shooting
-                this.updateMobileAimDirection();
+                // Only update if touch is still within reasonable bounds
+                if (touch.clientX >= rect.left - 50 && touch.clientX <= rect.right + 50 && 
+                    touch.clientY >= rect.top - 50 && touch.clientY <= rect.bottom + 50) {
+                    this.updateStickPosition(touch.clientX, touch.clientY, stick, 'right');
+                    
+                    // Update aim direction for continuous shooting
+                    this.updateMobileAimDirection();
+                }
             }
         }
 
@@ -3570,15 +3610,15 @@
                 leftStick.style.left = '20px';
                 rightStick.style.bottom = '20px';
                 rightStick.style.right = '20px';
-                mobileButtons.style.top = '20px';
+                mobileButtons.style.bottom = '170px';
                 mobileButtons.style.right = '20px';
             } else {
                 // Landscape mode - spread controls out
                 leftStick.style.bottom = '30px';
                 leftStick.style.left = '30px';
-                rightStick.style.top = '30px';
+                rightStick.style.bottom = '30px';
                 rightStick.style.right = '30px';
-                mobileButtons.style.top = '30px';
+                mobileButtons.style.bottom = '190px';
                 mobileButtons.style.right = '30px';
             }
         }
