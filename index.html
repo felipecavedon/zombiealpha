@@ -1616,8 +1616,16 @@
                 return;
             }
             
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
+            // Find the first touch that's not on mobile controls (movement stick)
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                const touchTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                // Skip if touch is on mobile controls
+                if (touchTarget && touchTarget.closest('.mobile-controls')) {
+                    continue;
+                }
+                
                 const rect = this.game.canvas.getBoundingClientRect();
                 const scale = this.game.currentScale || 1.0;
                 
@@ -1629,13 +1637,23 @@
                 this.mouse.y = Math.max(0, Math.min(MobileDetector.getWorldHeight(), this.mouse.y));
                 
                 this.handleMouseDown();
+                break; // Only handle the first valid touch for shooting
             }
         }
         
         handleTouchMove(e) {
             e.preventDefault();
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
+            
+            // Find the first touch that's not on mobile controls (movement stick)
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                const touchTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                // Skip if touch is on mobile controls
+                if (touchTarget && touchTarget.closest('.mobile-controls')) {
+                    continue;
+                }
+                
                 const rect = this.game.canvas.getBoundingClientRect();
                 const scale = this.game.currentScale || 1.0;
                 
@@ -1645,6 +1663,7 @@
                 // Clamp to world bounds
                 this.mouse.x = Math.max(0, Math.min(MobileDetector.getWorldWidth(), this.mouse.x));
                 this.mouse.y = Math.max(0, Math.min(MobileDetector.getWorldHeight(), this.mouse.y));
+                break; // Only handle the first valid touch for aiming
             }
         }
         
