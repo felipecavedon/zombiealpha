@@ -102,7 +102,16 @@
 
         .analog-stick.active::before {
             background: rgba(255, 255, 255, 0.9);
-            transform: translate(-50%, -50%) scale(1.2);
+            transform: translate(calc(-50% + var(--stick-offset-x, 0px)), calc(-50% + var(--stick-offset-y, 0px))) scale(1.2);
+        }
+        
+        .analog-stick.right.active {
+            border-color: #ff4444;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
+        }
+        
+        .analog-stick.right.active::before {
+            background: rgba(255, 68, 68, 0.9);
         }
 
         .analog-stick.left {
@@ -224,17 +233,22 @@
             z-index: 200;
             display: none;
             min-width: 500px;
+            max-width: 90vw;
+            max-height: 90vh;
             text-align: center;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
+            overflow-y: auto;
         }
 
         #shopInterface h2 {
             color: #fff;
             margin-bottom: 20px;
             font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         .shopItemsContainer {
@@ -242,6 +256,8 @@
             justify-content: center;
             gap: 10px;
             margin: 20px 0;
+            flex-wrap: wrap;
+            align-items: stretch;
         }
 
         .shopItem {
@@ -257,10 +273,12 @@
             justify-content: space-between;
             flex: 1;
             min-width: 180px;
+            max-width: 300px;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
+            touch-action: manipulation;
         }
 
         .shopItem:hover {
@@ -305,9 +323,9 @@
             color: #000;
             border: none;
             border-radius: 6px;
-            padding: 10px 20px;
+            padding: 15px 25px;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             margin: 0 10px;
@@ -316,6 +334,9 @@
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
+            touch-action: manipulation;
+            min-height: 50px;
+            min-width: 120px;
         }
 
         .shopButton:hover {
@@ -328,6 +349,28 @@
             color: #999;
             cursor: not-allowed;
             transform: none;
+        }
+        
+        /* Mobile-specific shop improvements */
+        .shopItem:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
+            transform: scale(1.02);
+        }
+        
+        .shopItem:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .shopButton:hover {
+            background: #ccc;
+            transform: scale(1.05);
+        }
+        
+        .shopButton:active {
+            transform: scale(0.95);
+            background: #eee;
         }
 
         /* =====================================================
@@ -359,19 +402,90 @@
            ===================================================== */
         @media (max-width: 768px) {
             #shopInterface {
-                min-width: 90vw;
-                max-width: 90vw;
-                padding: 15px;
+                min-width: 95vw;
+                max-width: 95vw;
+                padding: 20px;
+                border-radius: 8px;
+                border-width: 2px;
+            }
+            
+            #shopInterface h2 {
+                font-size: 20px;
+                margin-bottom: 15px;
             }
             
             .shopItemsContainer {
                 flex-direction: column;
-                gap: 5px;
+                gap: 8px;
+                margin: 15px 0;
             }
             
             .shopItem {
                 min-width: auto;
+                max-width: none;
                 margin: 5px 0;
+                padding: 20px;
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .shopItemInfo {
+                text-align: center;
+                width: 100%;
+            }
+            
+            .shopItemName {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            
+            .shopItemStats {
+                font-size: 14px;
+            }
+            
+            .shopControls {
+                margin-top: 15px;
+                padding-top: 15px;
+            }
+            
+            .shopButton {
+                padding: 18px 20px;
+                font-size: 18px;
+                margin: 5px;
+                min-height: 60px;
+                min-width: 140px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #shopInterface {
+                padding: 15px;
+                min-width: 98vw;
+                max-width: 98vw;
+            }
+            
+            #shopInterface h2 {
+                font-size: 18px;
+            }
+            
+            .shopItem {
+                padding: 15px;
+            }
+            
+            .shopItemName {
+                font-size: 15px;
+            }
+            
+            .shopItemStats {
+                font-size: 13px;
+            }
+            
+            .shopButton {
+                padding: 16px 18px;
+                font-size: 16px;
+                min-height: 55px;
+                min-width: 130px;
             }
         }
     </style>
@@ -1047,14 +1161,27 @@
         initAnalogStick(stick, side) {
             const element = stick.element;
             
-            element.addEventListener('touchstart', (e) => this.handleStickTouchStart(e, stick, side));
-            element.addEventListener('touchmove', (e) => this.handleStickTouchMove(e, stick, side));
-            element.addEventListener('touchend', (e) => this.handleStickTouchEnd(e, stick, side));
-            
-            // Mouse events for testing on desktop
-            element.addEventListener('mousedown', (e) => this.handleStickMouseDown(e, stick, side));
-            element.addEventListener('mousemove', (e) => this.handleStickMouseMove(e, stick, side));
-            element.addEventListener('mouseup', (e) => this.handleStickMouseUp(e, stick, side));
+            if (side === 'right') {
+                // Right stick handles shooting
+                element.addEventListener('touchstart', (e) => this.handleRightStickTouchStart(e, stick));
+                element.addEventListener('touchmove', (e) => this.handleRightStickTouchMove(e, stick));
+                element.addEventListener('touchend', (e) => this.handleRightStickTouchEnd(e, stick));
+                
+                // Mouse events for testing on desktop
+                element.addEventListener('mousedown', (e) => this.handleRightStickMouseDown(e, stick));
+                element.addEventListener('mousemove', (e) => this.handleRightStickMouseMove(e, stick));
+                element.addEventListener('mouseup', (e) => this.handleRightStickMouseUp(e, stick));
+            } else {
+                // Left stick handles movement
+                element.addEventListener('touchstart', (e) => this.handleStickTouchStart(e, stick, side));
+                element.addEventListener('touchmove', (e) => this.handleStickTouchMove(e, stick, side));
+                element.addEventListener('touchend', (e) => this.handleStickTouchEnd(e, stick, side));
+                
+                // Mouse events for testing on desktop
+                element.addEventListener('mousedown', (e) => this.handleStickMouseDown(e, stick, side));
+                element.addEventListener('mousemove', (e) => this.handleStickMouseMove(e, stick, side));
+                element.addEventListener('mouseup', (e) => this.handleStickMouseUp(e, stick, side));
+            }
         }
 
         initMobileButtons() {
@@ -1075,14 +1202,40 @@
             
             document.getElementById('weaponButton').addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                this.game.weaponSystem.switchSlot('primary');
+                this.cycleWeaponSlot();
             });
             
             // Mouse events for testing
             document.getElementById('jumpButton').addEventListener('click', () => this.game.inputManager.handleJump());
             document.getElementById('reloadButton').addEventListener('click', () => this.game.inputManager.handleReload());
             document.getElementById('shopButton').addEventListener('click', () => this.game.shopSystem.tryOpenShop());
-            document.getElementById('weaponButton').addEventListener('click', () => this.game.weaponSystem.switchSlot('primary'));
+            document.getElementById('weaponButton').addEventListener('click', () => this.cycleWeaponSlot());
+        }
+        
+        cycleWeaponSlot() {
+            const weaponSystem = this.game.weaponSystem;
+            const currentSlot = weaponSystem.currentSlot;
+            
+            // Define the order to cycle through weapons
+            const weaponOrder = ['primary', 'secondary', 'melee'];
+            const currentIndex = weaponOrder.indexOf(currentSlot);
+            const nextIndex = (currentIndex + 1) % weaponOrder.length;
+            const nextSlot = weaponOrder[nextIndex];
+            
+            // Switch to the next weapon
+            weaponSystem.switchSlot(nextSlot);
+            
+            // Update the button label to show current weapon number
+            const weaponButton = document.getElementById('weaponButton');
+            weaponButton.textContent = (nextIndex + 1).toString();
+            
+            // Add visual feedback
+            weaponButton.style.background = 'rgba(255, 213, 74, 0.3)';
+            setTimeout(() => {
+                weaponButton.style.background = '';
+            }, 200);
+            
+            console.log(`Switched to ${nextSlot} weapon (slot ${nextIndex + 1})`);
         }
 
         handleStickTouchStart(e, stick, side) {
@@ -1198,10 +1351,121 @@
                 y: this.rightStick.y / this.stickRadius
             };
         }
+        
+        // Right stick shooting handlers
+        handleRightStickTouchStart(e, stick) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = stick.element.getBoundingClientRect();
+            this.touchStartPos = {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+            stick.active = true;
+            stick.element.classList.add('active');
+            this.updateStickPosition(touch.clientX, touch.clientY, stick, 'right');
+            
+            // Start shooting
+            this.game.inputManager.mouse.down = true;
+            this.game.audioManager.init();
+        }
+
+        handleRightStickTouchMove(e, stick) {
+            e.preventDefault();
+            if (stick.active) {
+                const touch = e.touches[0];
+                this.updateStickPosition(touch.clientX, touch.clientY, stick, 'right');
+                
+                // Update aim direction for continuous shooting
+                this.updateMobileAimDirection();
+            }
+        }
+
+        handleRightStickTouchEnd(e, stick) {
+            e.preventDefault();
+            stick.active = false;
+            stick.x = 0;
+            stick.y = 0;
+            stick.element.classList.remove('active');
+            this.updateStickVisual(stick);
+            
+            // Stop shooting
+            this.game.inputManager.mouse.down = false;
+            this.game.weaponSystem.resetWeaponStates();
+        }
+
+        handleRightStickMouseDown(e, stick) {
+            e.preventDefault();
+            const rect = stick.element.getBoundingClientRect();
+            this.touchStartPos = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+            stick.active = true;
+            stick.element.classList.add('active');
+            this.updateStickPosition(e.clientX, e.clientY, stick, 'right');
+            
+            // Start shooting
+            this.game.inputManager.mouse.down = true;
+            this.game.audioManager.init();
+        }
+
+        handleRightStickMouseMove(e, stick) {
+            if (stick.active) {
+                this.updateStickPosition(e.clientX, e.clientY, stick, 'right');
+                
+                // Update aim direction for continuous shooting
+                this.updateMobileAimDirection();
+            }
+        }
+
+        handleRightStickMouseUp(e, stick) {
+            stick.active = false;
+            stick.x = 0;
+            stick.y = 0;
+            stick.element.classList.remove('active');
+            this.updateStickVisual(stick);
+            
+            // Stop shooting
+            this.game.inputManager.mouse.down = false;
+            this.game.weaponSystem.resetWeaponStates();
+        }
+        
+        updateMobileAimDirection() {
+            if (!this.rightStick.active) return;
+            
+            const aimInput = this.getRightStickInput();
+            if (Math.abs(aimInput.x) > 0 || Math.abs(aimInput.y) > 0) {
+                // Update the mouse position for aiming based on right stick
+                const player = this.game.player;
+                const gunPos = this.game.weaponSystem.getGunPosition();
+                
+                // Calculate aim position relative to player
+                const aimDistance = 100; // Distance to project aim point
+                const aimX = gunPos.x + (aimInput.x * aimDistance);
+                const aimY = gunPos.y + (aimInput.y * aimDistance);
+                
+                // Update mouse position for weapon system
+                this.game.inputManager.mouse.x = aimX;
+                this.game.inputManager.mouse.y = aimY;
+            }
+        }
 
         show() {
             this.isActive = true;
             document.getElementById('mobileControls').classList.add('active');
+            
+            // Initialize weapon button label
+            this.updateWeaponButtonLabel();
+        }
+        
+        updateWeaponButtonLabel() {
+            const weaponSystem = this.game.weaponSystem;
+            const currentSlot = weaponSystem.currentSlot;
+            const weaponOrder = ['primary', 'secondary', 'melee'];
+            const currentIndex = weaponOrder.indexOf(currentSlot);
+            const weaponButton = document.getElementById('weaponButton');
+            weaponButton.textContent = (currentIndex + 1).toString();
         }
 
         hide() {
@@ -1229,12 +1493,8 @@
             this.game.canvas.addEventListener('mousedown', () => this.handleMouseDown());
             window.addEventListener('mouseup', () => this.handleMouseUp());
             
-            // Initialize mobile input if on mobile device
+            // Add touch events for mobile shooting (will be initialized later)
             if (MobileDetector.isMobile()) {
-                this.mobileInput = new MobileInputManager(this.game);
-                this.mobileInput.show();
-                
-                // Add touch events for mobile shooting
                 this.game.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
                 this.game.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
                 this.game.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
@@ -1292,6 +1552,13 @@
         getMobileAimInput() {
             if (!this.mobileInput) return { x: 0, y: 0 };
             return this.mobileInput.getRightStickInput();
+        }
+        
+        initializeMobileControls() {
+            if (MobileDetector.isMobile() && !this.mobileInput) {
+                this.mobileInput = new MobileInputManager(this.game);
+                this.mobileInput.show();
+            }
         }
         
         getCurrentScale() {
@@ -1435,7 +1702,10 @@
         }
 
         update() {
-            if (!this.game.inputManager.mouse.down) return;
+            const input = this.game.inputManager;
+            const isShooting = input.mouse.down || (input.mobileInput && input.mobileInput.rightStick.active);
+            
+            if (!isShooting) return;
 
             const weapon = this.getCurrentWeapon();
             if (weapon.type === 'melee') {
@@ -1560,8 +1830,8 @@
         calculateFireDirection(gunPos) {
             const input = this.game.inputManager;
             
-            if (input.mobileInput && input.mobileInput.isActive) {
-                // Mobile aim input
+            if (input.mobileInput && input.mobileInput.rightStick.active) {
+                // Mobile aim input from right stick
                 const aimInput = input.getMobileAimInput();
                 if (Math.abs(aimInput.x) > 0 || Math.abs(aimInput.y) > 0) {
                     // Use right stick for aiming
@@ -1998,6 +2268,11 @@
             this.updateTimedEffect(this.meleeSlash, dt);
             this.updateTimedEffect(this.waveAnnouncement, dt);
             this.updateHitEffects(dt);
+            
+            // Update mobile aim direction continuously
+            if (this.game.inputManager.mobileInput && this.game.inputManager.mobileInput.rightStick.active) {
+                this.game.inputManager.mobileInput.updateMobileAimDirection();
+            }
         }
 
         updateScreenShake(dt) {
@@ -3160,6 +3435,10 @@
             // Mobile-specific initialization
             if (MobileDetector.isMobile()) {
                 this.initializeMobileFeatures();
+                // Initialize mobile controls after all systems are ready
+                setTimeout(() => {
+                    this.inputManager.initializeMobileControls();
+                }, 100);
             }
         }
 
@@ -3297,7 +3576,7 @@
                 // Landscape mode - spread controls out
                 leftStick.style.bottom = '30px';
                 leftStick.style.left = '30px';
-                rightStick.style.bottom = '30px';
+                rightStick.style.top = '30px';
                 rightStick.style.right = '30px';
                 mobileButtons.style.top = '30px';
                 mobileButtons.style.right = '30px';
