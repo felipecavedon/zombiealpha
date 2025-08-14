@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Zombie Survival - A pixel art action survival game">
     <meta name="author" content="Cavedon">
     <title>Zombie Survival - Alpha v3.0</title>
@@ -22,6 +22,13 @@
             overflow: hidden;
             background: #000;
             font-family: monospace;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         /* =====================================================
@@ -49,6 +56,117 @@
             font-smooth: never;
             -webkit-font-smoothing: none;
             -moz-osx-font-smoothing: unset;
+        }
+
+        /* =====================================================
+           MOBILE CONTROLS
+           ===================================================== */
+        .mobile-controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .mobile-controls.active {
+            display: block;
+        }
+
+        .analog-stick {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid #ffd54a;
+            border-radius: 50%;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        .analog-stick::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 213, 74, 0.8);
+            border-radius: 50%;
+            transform: translate(calc(-50% + var(--stick-offset-x, 0px)), calc(-50% + var(--stick-offset-y, 0px)));
+            transition: all 0.1s ease;
+        }
+
+        .analog-stick.active::before {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .analog-stick.left {
+            bottom: 30px;
+            left: 30px;
+        }
+
+        .analog-stick.right {
+            bottom: 30px;
+            right: 30px;
+        }
+
+        .mobile-buttons {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .mobile-button {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd54a;
+            border-radius: 50%;
+            color: #fff;
+            font-family: monospace;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .mobile-button:active {
+            background: rgba(255, 213, 74, 0.3);
+            transform: scale(0.95);
+        }
+
+        .mobile-button.jump {
+            background: rgba(0, 100, 0, 0.8);
+            border-color: #4caf50;
+        }
+
+        .mobile-button.reload {
+            background: rgba(100, 0, 0, 0.8);
+            border-color: #f44336;
+        }
+
+        .mobile-button.shop {
+            background: rgba(0, 0, 100, 0.8);
+            border-color: #2196f3;
+        }
+
+        .mobile-button.weapon {
+            background: rgba(100, 100, 0, 0.8);
+            border-color: #ff9800;
         }
 
         /* =====================================================
@@ -235,6 +353,27 @@
             opacity: 0;
             pointer-events: none;
         }
+
+        /* =====================================================
+           MOBILE RESPONSIVE
+           ===================================================== */
+        @media (max-width: 768px) {
+            #shopInterface {
+                min-width: 90vw;
+                max-width: 90vw;
+                padding: 15px;
+            }
+            
+            .shopItemsContainer {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .shopItem {
+                min-width: auto;
+                margin: 5px 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -242,6 +381,18 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <button id="waveControl" class="ui-button">START WAVES</button>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div class="mobile-controls" id="mobileControls">
+        <div class="analog-stick left" id="leftStick"></div>
+        <div class="analog-stick right" id="rightStick"></div>
+        <div class="mobile-buttons">
+            <div class="mobile-button jump" id="jumpButton">JUMP</div>
+            <div class="mobile-button reload" id="reloadButton">R</div>
+            <div class="mobile-button shop" id="shopButton">SHOP</div>
+            <div class="mobile-button weapon" id="weaponButton">1</div>
+        </div>
     </div>
     
     <!-- Shop Interface -->
@@ -312,7 +463,11 @@
         
         // Merchant
         MERCHANT_X: 200,
-        MERCHANT_INTERACTION_RANGE: 80
+        MERCHANT_INTERACTION_RANGE: 80,
+        
+        // Mobile
+        MOBILE_ANALOG_DEADZONE: 0.1,
+        MOBILE_ANALOG_SENSITIVITY: 1.5
     };
 
     // =====================================================
@@ -688,6 +843,25 @@
     };
 
     // =====================================================
+    // MOBILE DETECTION & UTILITIES
+    // =====================================================
+    class MobileDetector {
+        static isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                   ('ontouchstart' in window) ||
+                   (navigator.maxTouchPoints > 0);
+        }
+        
+        static isPortrait() {
+            return window.innerHeight > window.innerWidth;
+        }
+        
+        static getDevicePixelRatio() {
+            return window.devicePixelRatio || 1;
+        }
+    }
+
+    // =====================================================
     // UTILITY FUNCTIONS
     // =====================================================
     class Utils {
@@ -845,6 +1019,198 @@
     }
 
     // =====================================================
+    // MOBILE INPUT MANAGER
+    // =====================================================
+    class MobileInputManager {
+        constructor(game) {
+            this.game = game;
+            this.isActive = false;
+            this.leftStick = { x: 0, y: 0, active: false, element: null };
+            this.rightStick = { x: 0, y: 0, active: false, element: null };
+            this.touchStartPos = { x: 0, y: 0 };
+            this.stickRadius = 60;
+            this.initMobileControls();
+        }
+
+        initMobileControls() {
+            this.leftStick.element = document.getElementById('leftStick');
+            this.rightStick.element = document.getElementById('rightStick');
+            
+            // Initialize touch events for analog sticks
+            this.initAnalogStick(this.leftStick, 'left');
+            this.initAnalogStick(this.rightStick, 'right');
+            
+            // Initialize mobile buttons
+            this.initMobileButtons();
+        }
+
+        initAnalogStick(stick, side) {
+            const element = stick.element;
+            
+            element.addEventListener('touchstart', (e) => this.handleStickTouchStart(e, stick, side));
+            element.addEventListener('touchmove', (e) => this.handleStickTouchMove(e, stick, side));
+            element.addEventListener('touchend', (e) => this.handleStickTouchEnd(e, stick, side));
+            
+            // Mouse events for testing on desktop
+            element.addEventListener('mousedown', (e) => this.handleStickMouseDown(e, stick, side));
+            element.addEventListener('mousemove', (e) => this.handleStickMouseMove(e, stick, side));
+            element.addEventListener('mouseup', (e) => this.handleStickMouseUp(e, stick, side));
+        }
+
+        initMobileButtons() {
+            document.getElementById('jumpButton').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.game.inputManager.handleJump();
+            });
+            
+            document.getElementById('reloadButton').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.game.inputManager.handleReload();
+            });
+            
+            document.getElementById('shopButton').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.game.shopSystem.tryOpenShop();
+            });
+            
+            document.getElementById('weaponButton').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.game.weaponSystem.switchSlot('primary');
+            });
+            
+            // Mouse events for testing
+            document.getElementById('jumpButton').addEventListener('click', () => this.game.inputManager.handleJump());
+            document.getElementById('reloadButton').addEventListener('click', () => this.game.inputManager.handleReload());
+            document.getElementById('shopButton').addEventListener('click', () => this.game.shopSystem.tryOpenShop());
+            document.getElementById('weaponButton').addEventListener('click', () => this.game.weaponSystem.switchSlot('primary'));
+        }
+
+        handleStickTouchStart(e, stick, side) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = stick.element.getBoundingClientRect();
+            this.touchStartPos = {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+            stick.active = true;
+            stick.element.classList.add('active');
+            this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+        }
+
+        handleStickTouchMove(e, stick, side) {
+            e.preventDefault();
+            if (stick.active) {
+                const touch = e.touches[0];
+                this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+            }
+        }
+
+        handleStickTouchEnd(e, stick, side) {
+            e.preventDefault();
+            stick.active = false;
+            stick.x = 0;
+            stick.y = 0;
+            stick.element.classList.remove('active');
+            this.updateStickVisual(stick);
+        }
+
+        handleStickMouseDown(e, stick, side) {
+            e.preventDefault();
+            const rect = stick.element.getBoundingClientRect();
+            this.touchStartPos = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+            stick.active = true;
+            stick.element.classList.add('active');
+            this.updateStickPosition(e.clientX, e.clientY, stick, side);
+        }
+
+        handleStickMouseMove(e, stick, side) {
+            if (stick.active) {
+                this.updateStickPosition(e.clientX, e.clientY, stick, side);
+            }
+        }
+
+        handleStickMouseUp(e, stick, side) {
+            stick.active = false;
+            stick.x = 0;
+            stick.y = 0;
+            stick.element.classList.remove('active');
+            this.updateStickVisual(stick);
+        }
+
+        updateStickPosition(clientX, clientY, stick, side) {
+            const rect = stick.element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const deltaX = clientX - centerX;
+            const deltaY = clientY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            if (distance > this.stickRadius) {
+                const angle = Math.atan2(deltaY, deltaX);
+                stick.x = Math.cos(angle) * this.stickRadius;
+                stick.y = Math.sin(angle) * this.stickRadius;
+            } else {
+                stick.x = deltaX;
+                stick.y = deltaY;
+            }
+            
+            // Apply deadzone
+            if (Math.abs(stick.x) < CONFIG.MOBILE_ANALOG_DEADZONE * this.stickRadius) stick.x = 0;
+            if (Math.abs(stick.y) < CONFIG.MOBILE_ANALOG_DEADZONE * this.stickRadius) stick.y = 0;
+            
+            this.updateStickVisual(stick);
+        }
+
+        updateStickVisual(stick) {
+            const element = stick.element;
+            const before = element.querySelector('::before') || element;
+            
+            if (stick.active && (Math.abs(stick.x) > 0 || Math.abs(stick.y) > 0)) {
+                const maxOffset = 30;
+                const offsetX = (stick.x / this.stickRadius) * maxOffset;
+                const offsetY = (stick.y / this.stickRadius) * maxOffset;
+                
+                element.style.setProperty('--stick-offset-x', `${offsetX}px`);
+                element.style.setProperty('--stick-offset-y', `${offsetY}px`);
+            } else {
+                element.style.setProperty('--stick-offset-x', '0px');
+                element.style.setProperty('--stick-offset-y', '0px');
+            }
+        }
+
+        getLeftStickInput() {
+            if (!this.leftStick.active) return { x: 0, y: 0 };
+            return {
+                x: this.leftStick.x / this.stickRadius,
+                y: this.leftStick.y / this.stickRadius
+            };
+        }
+
+        getRightStickInput() {
+            if (!this.rightStick.active) return { x: 0, y: 0 };
+            return {
+                x: this.rightStick.x / this.stickRadius,
+                y: this.rightStick.y / this.stickRadius
+            };
+        }
+
+        show() {
+            this.isActive = true;
+            document.getElementById('mobileControls').classList.add('active');
+        }
+
+        hide() {
+            this.isActive = false;
+            document.getElementById('mobileControls').classList.remove('active');
+        }
+    }
+
+    // =====================================================
     // INPUT MANAGER
     // =====================================================
     class InputManager {
@@ -852,6 +1218,7 @@
             this.game = game;
             this.keys = { w: false, a: false, d: false };
             this.mouse = { x: 0, y: 0, down: false };
+            this.mobileInput = null;
             this.initEventListeners();
         }
 
@@ -861,6 +1228,17 @@
             this.game.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
             this.game.canvas.addEventListener('mousedown', () => this.handleMouseDown());
             window.addEventListener('mouseup', () => this.handleMouseUp());
+            
+            // Initialize mobile input if on mobile device
+            if (MobileDetector.isMobile()) {
+                this.mobileInput = new MobileInputManager(this.game);
+                this.mobileInput.show();
+                
+                // Add touch events for mobile shooting
+                this.game.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+                this.game.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+                this.game.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+            }
         }
 
         handleKeyDown(e) {
@@ -904,6 +1282,16 @@
             // Clamp to world bounds
             this.mouse.x = Math.max(0, Math.min(CONFIG.WORLD_WIDTH, this.mouse.x));
             this.mouse.y = Math.max(0, Math.min(CONFIG.WORLD_HEIGHT, this.mouse.y));
+        }
+        
+        getMobileMovementInput() {
+            if (!this.mobileInput) return { x: 0, y: 0 };
+            return this.mobileInput.getLeftStickInput();
+        }
+        
+        getMobileAimInput() {
+            if (!this.mobileInput) return { x: 0, y: 0 };
+            return this.mobileInput.getRightStickInput();
         }
         
         getCurrentScale() {
@@ -953,6 +1341,45 @@
             if (this.game.gameOver && this.game.canRestart) {
                 this.game.restart();
             }
+        }
+        
+        handleTouchStart(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = this.game.canvas.getBoundingClientRect();
+                const scale = this.game.currentScale || 1.0;
+                
+                this.mouse.x = (touch.clientX - rect.left) / scale;
+                this.mouse.y = (touch.clientY - rect.top) / scale;
+                
+                // Clamp to world bounds
+                this.mouse.x = Math.max(0, Math.min(CONFIG.WORLD_WIDTH, this.mouse.x));
+                this.mouse.y = Math.max(0, Math.min(CONFIG.WORLD_HEIGHT, this.mouse.y));
+                
+                this.handleMouseDown();
+            }
+        }
+        
+        handleTouchMove(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = this.game.canvas.getBoundingClientRect();
+                const scale = this.game.currentScale || 1.0;
+                
+                this.mouse.x = (touch.clientX - rect.left) / scale;
+                this.mouse.y = (touch.clientY - rect.top) / scale;
+                
+                // Clamp to world bounds
+                this.mouse.x = Math.max(0, Math.min(CONFIG.WORLD_WIDTH, this.mouse.x));
+                this.mouse.y = Math.max(0, Math.min(CONFIG.WORLD_HEIGHT, this.mouse.y));
+            }
+        }
+        
+        handleTouchEnd(e) {
+            e.preventDefault();
+            this.handleMouseUp();
         }
     }
 
@@ -1131,7 +1558,19 @@
         }
 
         calculateFireDirection(gunPos) {
-            const mouse = this.game.inputManager.mouse;
+            const input = this.game.inputManager;
+            
+            if (input.mobileInput && input.mobileInput.isActive) {
+                // Mobile aim input
+                const aimInput = input.getMobileAimInput();
+                if (Math.abs(aimInput.x) > 0 || Math.abs(aimInput.y) > 0) {
+                    // Use right stick for aiming
+                    return Utils.normalizeVector(aimInput.x, aimInput.y);
+                }
+            }
+            
+            // Fallback to mouse input
+            const mouse = input.mouse;
             return Utils.getDirection(gunPos.x, gunPos.y, mouse.x, mouse.y);
         }
 
@@ -2280,8 +2719,18 @@
             const player = this.game.player;
             const input = this.game.inputManager;
             
-            // Horizontal movement
-            const moveDir = (input.keys.a ? -1 : 0) + (input.keys.d ? 1 : 0);
+            // Get movement input from keyboard or mobile
+            let moveDir = 0;
+            if (input.mobileInput) {
+                // Mobile input
+                const mobileInput = input.getMobileMovementInput();
+                moveDir = mobileInput.x;
+            } else {
+                // Keyboard input
+                moveDir = (input.keys.a ? -1 : 0) + (input.keys.d ? 1 : 0);
+            }
+            
+            // Apply movement
             player.velocityX += (moveDir * CONFIG.PLAYER_MOVE_SPEED - player.velocityX) * 0.4;
             player.x += player.velocityX * dt;
             player.x = Utils.clamp(player.x, 0, CONFIG.WORLD_WIDTH - player.width);
@@ -2707,6 +3156,11 @@
             
             setTimeout(() => this.setupInitialPositions(), CONFIG.INITIAL_SETUP_DELAY);
             setTimeout(() => this.hideLoadingScreen(), CONFIG.LOADING_HIDE_DELAY);
+            
+            // Mobile-specific initialization
+            if (MobileDetector.isMobile()) {
+                this.initializeMobileFeatures();
+            }
         }
 
         initializeSystems() {
@@ -2753,17 +3207,47 @@
             // Handle window resizing for scaling only
             this.handleWindowResize();
             window.addEventListener('resize', () => this.handleWindowResize());
+            
+            // Handle orientation change on mobile
+            if (MobileDetector.isMobile()) {
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => this.handleWindowResize(), 100);
+                });
+            }
         }
 
         handleWindowResize() {
             // Calculate the scale to fit the 1920x1080 world in the window
-            const padding = 0; // No padding for full-screen experience
-            const availableWidth = window.innerWidth - (padding * 2);
-            const availableHeight = window.innerHeight - (padding * 2);
+            let padding = 0;
+            let availableWidth = window.innerWidth - (padding * 2);
+            let availableHeight = window.innerHeight - (padding * 2);
+            
+            // Mobile-specific adjustments
+            if (MobileDetector.isMobile()) {
+                // On mobile, we want to use more of the screen
+                if (MobileDetector.isPortrait()) {
+                    // Portrait mode - scale to fit width
+                    availableWidth = window.innerWidth;
+                    availableHeight = window.innerHeight;
+                } else {
+                    // Landscape mode - scale to fit height
+                    availableWidth = window.innerWidth;
+                    availableHeight = window.innerHeight;
+                }
+            }
             
             const scaleX = availableWidth / CONFIG.WORLD_WIDTH;
             const scaleY = availableHeight / CONFIG.WORLD_HEIGHT;
-            const scale = Math.min(scaleX, scaleY, 1.0); // Don't scale up beyond 1x for crisp pixels
+            let scale = Math.min(scaleX, scaleY, 1.0); // Don't scale up beyond 1x for crisp pixels
+            
+            // Mobile-specific scaling adjustments
+            if (MobileDetector.isMobile()) {
+                // Allow slight scaling up on mobile for better visibility
+                scale = Math.min(scaleX, scaleY, 1.2);
+                
+                // Ensure minimum scale for mobile
+                if (scale < 0.3) scale = 0.3;
+            }
             
             // Calculate position to center the canvas
             const scaledWidth = CONFIG.WORLD_WIDTH * scale;
@@ -2781,10 +3265,64 @@
             // Store the current scale for mouse input calculations
             this.currentScale = scale;
             
+            // Update mobile controls positioning if active
+            if (this.inputManager.mobileInput) {
+                this.updateMobileControlsPosition();
+            }
+            
             // Debug logging (only when DEBUG_MODE is enabled)
             if (CONFIG.DEBUG_MODE) {
                 console.log(`Window: ${window.innerWidth}x${window.innerHeight}, Scale: ${scale}, Scaled size: ${scaledWidth}x${scaledHeight}, Position: ${left},${top}`);
             }
+        }
+        
+        updateMobileControlsPosition() {
+            if (!this.inputManager.mobileInput) return;
+            
+            const controls = document.getElementById('mobileControls');
+            const leftStick = document.getElementById('leftStick');
+            const rightStick = document.getElementById('rightStick');
+            const mobileButtons = document.querySelector('.mobile-buttons');
+            
+            // Adjust positioning based on screen size and orientation
+            if (MobileDetector.isPortrait()) {
+                // Portrait mode - stack controls vertically
+                leftStick.style.bottom = '20px';
+                leftStick.style.left = '20px';
+                rightStick.style.bottom = '20px';
+                rightStick.style.right = '20px';
+                mobileButtons.style.top = '20px';
+                mobileButtons.style.right = '20px';
+            } else {
+                // Landscape mode - spread controls out
+                leftStick.style.bottom = '30px';
+                leftStick.style.left = '30px';
+                rightStick.style.bottom = '30px';
+                rightStick.style.right = '30px';
+                mobileButtons.style.top = '30px';
+                mobileButtons.style.right = '30px';
+            }
+        }
+        
+        initializeMobileFeatures() {
+            // Prevent zooming and bouncing on mobile
+            document.addEventListener('touchmove', (e) => {
+                if (e.target.closest('.mobile-controls')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            // Add mobile-specific CSS classes
+            document.body.classList.add('mobile-device');
+            
+            // Initialize CSS custom properties for analog sticks
+            document.documentElement.style.setProperty('--stick-offset-x', '0px');
+            document.documentElement.style.setProperty('--stick-offset-y', '0px');
+            
+            // Update mobile controls position
+            this.updateMobileControlsPosition();
+            
+            console.log('Mobile features initialized');
         }
 
         updatePositionsAfterResize() {
