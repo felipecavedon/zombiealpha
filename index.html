@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Zombie Survival - A pixel art action survival game">
     <meta name="author" content="Cavedon">
     <title>Zombie Survival - Alpha v3.0</title>
@@ -24,47 +24,31 @@
             font-family: monospace;
         }
 
-        /* Mobile-specific body adjustments */
-        @media (max-width: 767px) {
-            html, body {
-                position: fixed;
-                width: 100vw;
-                height: 100vh;
-                height: 100dvh; /* Dynamic viewport height for mobile */
-                overflow: hidden;
-                -webkit-overflow-scrolling: touch;
-                margin: 0;
-                padding: 0;
-            }
-        }
-
         /* =====================================================
            GAME CANVAS
            ===================================================== */
-        #gameCanvas {
-            display: block;
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 1920px;
+            height: 1080px;
             cursor: crosshair;
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
-        }
-
-        /* Mobile-specific canvas adjustments */
-        @media (max-width: 767px) {
-            #gameCanvas {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                height: 100dvh; /* Dynamic viewport height for mobile */
-                touch-action: none;
-                -webkit-user-select: none;
-                -webkit-touch-callout: none;
-                -webkit-tap-highlight-color: transparent;
-            }
+            flex-shrink: 0;
+            font-smooth: never;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: unset;
         }
 
         /* =====================================================
@@ -97,106 +81,11 @@
         }
 
         #waveControl {
-            position: fixed;
+            position: absolute;
             top: 20px;
             right: 20px;
             z-index: 100;
-        }
-
-        /* =====================================================
-           MOBILE CONTROLS
-           ===================================================== */
-        #mobileControls {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 150;
-            display: none;
-        }
-
-        .mobile-button {
-            width: 60px;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid #ffd54a;
-            border-radius: 50%;
-            color: #fff;
-            font-family: monospace;
-            font-size: 20px;
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 5px;
-        }
-
-        .mobile-button:active {
-            background: rgba(0, 0, 0, 0.9);
-            border-color: #fff;
-            transform: scale(0.95);
-        }
-
-        .mobile-button.wasd {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .mobile-button.shoot {
-            background: rgba(255, 0, 0, 0.7);
-            border-color: #ff4444;
-        }
-
-        .mobile-button.shoot:active {
-            background: rgba(255, 0, 0, 0.9);
-        }
-
-        .mobile-button.reload {
-            background: rgba(0, 100, 255, 0.7);
-            border-color: #4488ff;
-        }
-
-        .mobile-button.reload:active {
-            background: rgba(0, 100, 255, 0.9);
-        }
-
-        /* Mobile orientation warning */
-        #orientationWarning {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            color: #fff;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            font-family: monospace;
-            font-size: 18px;
-            text-align: center;
-        }
-
-        #orientationWarning.show {
-            display: flex;
-        }
-
-        /* Hide mobile controls on desktop */
-        @media (min-width: 768px) {
-            #mobileControls {
-                display: none !important;
-            }
-        }
-
-        /* Show mobile controls on mobile */
-        @media (max-width: 767px) {
-            #mobileControls {
-                display: block;
-            }
+            pointer-events: auto;
         }
 
         /* =====================================================
@@ -350,25 +239,9 @@
 </head>
 <body>
     <div id="loadingScreen">Loading...</div>
-    <canvas id="gameCanvas"></canvas>
-    <button id="waveControl" class="ui-button">START WAVES</button>
-    
-    <!-- Mobile Controls -->
-    <div id="mobileControls">
-        <div class="mobile-button wasd" id="moveLeft">A</div>
-        <div class="mobile-button wasd" id="moveRight">D</div>
-        <div class="mobile-button wasd" id="jump">W</div>
-        <div class="mobile-button shoot" id="shoot">🔥</div>
-        <div class="mobile-button reload" id="reload">R</div>
-    </div>
-
-    <!-- Mobile Orientation Warning -->
-    <div id="orientationWarning">
-        <div>
-            <h2>🔄 Please Rotate Your Device</h2>
-            <p>This game works best in landscape mode</p>
-            <p>Please rotate your device horizontally</p>
-        </div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <button id="waveControl" class="ui-button">START WAVES</button>
     </div>
     
     <!-- Shop Interface -->
@@ -401,6 +274,8 @@
         PLAYER_JUMP_SPEED: 540,
         
         // World
+        WORLD_WIDTH: 1920,
+        WORLD_HEIGHT: 1080,
         GROUND_HEIGHT: 40,
         GROUND_COLLISION_OFFSET: -6,
         
@@ -781,14 +656,14 @@
         zombieSpitter: {
             width: 30,
             height: 40,
-            speed: 70,
+            speed: 40,
             touchDamage: 5,
             hitCooldown: 1.0,
             maxHP: 45,
             spriteKey: 'zombieSpitter',
-            attackRange: 200,
+            attackRange: 400,
             attackCooldown: 2.0,
-            projectileSpeed: 500,
+            projectileSpeed: 120,
             projectileDamage: 12
         },
         zombieTank: {
@@ -986,9 +861,6 @@
             this.game.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
             this.game.canvas.addEventListener('mousedown', () => this.handleMouseDown());
             window.addEventListener('mouseup', () => this.handleMouseUp());
-            
-            // Mobile controls
-            this.initMobileControls();
         }
 
         handleKeyDown(e) {
@@ -1022,8 +894,33 @@
 
         handleMouseMove(e) {
             const rect = this.game.canvas.getBoundingClientRect();
-            this.mouse.x = e.clientX - rect.left;
-            this.mouse.y = e.clientY - rect.top;
+            
+            // Convert screen coordinates to world coordinates using the actual canvas rect
+            // This handles both fullscreen and windowed modes properly
+            const scale = this.game.currentScale || 1.0;
+            this.mouse.x = (e.clientX - rect.left) / scale;
+            this.mouse.y = (e.clientY - rect.top) / scale;
+            
+            // Clamp to world bounds
+            this.mouse.x = Math.max(0, Math.min(CONFIG.WORLD_WIDTH, this.mouse.x));
+            this.mouse.y = Math.max(0, Math.min(CONFIG.WORLD_HEIGHT, this.mouse.y));
+        }
+        
+        getCurrentScale() {
+            // Use the stored scale from the game instance if available
+            if (this.game && this.game.currentScale !== undefined) {
+                return this.game.currentScale;
+            }
+            
+            // Fallback calculation for 1920x1080 world
+            const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
+            const padding = 0;
+            const availableWidth = containerRect.width - (padding * 2);
+            const availableHeight = containerRect.height - (padding * 2);
+            
+            const scaleX = availableWidth / CONFIG.WORLD_WIDTH;
+            const scaleY = availableHeight / CONFIG.WORLD_HEIGHT;
+            return Math.min(scaleX, scaleY, 1.0);
         }
 
         handleMouseDown() {
@@ -1055,64 +952,6 @@
         handleRestart() {
             if (this.game.gameOver && this.game.canRestart) {
                 this.game.restart();
-            }
-        }
-
-        initMobileControls() {
-            // Mobile movement buttons
-            const moveLeft = document.getElementById('moveLeft');
-            const moveRight = document.getElementById('moveRight');
-            const jump = document.getElementById('jump');
-            const shoot = document.getElementById('shoot');
-            const reload = document.getElementById('reload');
-
-            if (moveLeft) {
-                moveLeft.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.keys.a = true;
-                });
-                moveLeft.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.keys.a = false;
-                });
-            }
-
-            if (moveRight) {
-                moveRight.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.keys.d = true;
-                });
-                moveRight.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.keys.d = false;
-                });
-            }
-
-            if (jump) {
-                jump.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.handleJump();
-                });
-            }
-
-            if (shoot) {
-                shoot.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.mouse.down = true;
-                    this.game.audioManager.init();
-                });
-                shoot.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.mouse.down = false;
-                    this.game.weaponSystem.resetWeaponStates();
-                });
-            }
-
-            if (reload) {
-                reload.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.handleReload();
-                });
             }
         }
     }
@@ -1569,6 +1408,7 @@
         }
 
         startWaves() {
+            console.log('Starting waves...');
             this.gameStage = 'waves';
             this.spawnWave(this.currentWave);
             this.updateButtonState();
@@ -1593,7 +1433,9 @@
         }
 
         spawnWave(waveNumber) {
+            console.log(`Spawning wave ${waveNumber}`);
             const zombieCount = this.calculateZombieCount(waveNumber);
+            console.log(`Zombie count: ${zombieCount}`);
             
             this.game.effectsManager.showWaveAnnouncement(waveNumber);
             this.isSpawningWave = true;
@@ -1608,22 +1450,26 @@
 
         scheduleZombieSpawns(zombieCount, waveNumber) {
             let zombiesSpawned = 0;
+            console.log(`Scheduling ${zombieCount} zombies for wave ${waveNumber}`);
             
             const spawnNextZombie = () => {
                 if (this.gameStage !== 'waves') {
+                    console.log('Game stage changed, stopping spawns');
                     this.isSpawningWave = false;
                     return;
                 }
                 
                 if (zombiesSpawned < zombieCount) {
                     const type = this.selectZombieType(waveNumber, zombiesSpawned);
-                    this.game.spawnZombie(this.game.canvas.width + 50, type);
+                    console.log(`Spawning zombie ${zombiesSpawned + 1}/${zombieCount}: ${type}`);
+                    this.game.spawnZombie(CONFIG.WORLD_WIDTH + 50, type);
                     zombiesSpawned++;
                     
                     if (zombiesSpawned < zombieCount) {
                         const timer = setTimeout(spawnNextZombie, CONFIG.ZOMBIE_SPAWN_DELAY);
                         this.spawnTimers.push(timer);
                     } else {
+                        console.log('Wave spawning complete');
                         this.isSpawningWave = false;
                     }
                 }
@@ -1810,24 +1656,24 @@
         }
 
         clearScreen() {
-            this.ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+            this.ctx.clearRect(0, 0, CONFIG.WORLD_WIDTH, CONFIG.WORLD_HEIGHT);
         }
 
         renderBackground() {
             this.ctx.fillStyle = PALETTE.black;
-            this.ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+            this.ctx.fillRect(0, 0, CONFIG.WORLD_WIDTH, CONFIG.WORLD_HEIGHT);
             this.renderClouds();
         }
 
         renderClouds() {
-            const baseY = this.game.canvas.height * 0.25;
+            const baseY = CONFIG.WORLD_HEIGHT * 0.25;
             this.cloudOffset += CONFIG.CLOUD_SPEED;
             
             let cloudsVisible = 0;
             
             for (let i = 0; i < this.clouds.length; i++) {
-                const cloudX = (i * CONFIG.CLOUD_SPACING - this.cloudOffset + this.game.canvas.width + 200);
-                if (cloudX > -400 && cloudX < this.game.canvas.width + 400) {
+                const cloudX = (i * CONFIG.CLOUD_SPACING - this.cloudOffset + CONFIG.WORLD_WIDTH + 200);
+                if (cloudX > -400 && cloudX < CONFIG.WORLD_WIDTH + 400) {
                     const variation = Math.sin(cloudX * 0.01) * 15;
                     this.drawCloudSprite(this.clouds[i], cloudX, baseY + variation);
                     cloudsVisible++;
@@ -1866,19 +1712,19 @@
         }
 
         renderGround() {
-            const y = this.game.canvas.height - CONFIG.GROUND_HEIGHT;
+            const y = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT;
 
             this.ctx.fillStyle = '#3d2b1f';
-            this.ctx.fillRect(0, y + 20, this.game.canvas.width, 20);
+            this.ctx.fillRect(0, y + 20, CONFIG.WORLD_WIDTH, 20);
 
             this.ctx.fillStyle = '#2d4a2d';
-            this.ctx.fillRect(0, y + 10, this.game.canvas.width, 10);
+            this.ctx.fillRect(0, y + 10, CONFIG.WORLD_WIDTH, 10);
 
             this.ctx.fillStyle = '#4a7c59';
-            this.ctx.fillRect(0, y, this.game.canvas.width, 10);
+            this.ctx.fillRect(0, y, CONFIG.WORLD_WIDTH, 10);
 
             this.ctx.fillStyle = PALETTE.outline;
-            this.ctx.fillRect(0, y - 1, this.game.canvas.width, 1);
+            this.ctx.fillRect(0, y - 1, CONFIG.WORLD_WIDTH, 1);
         }
 
         renderEntities(shake) {
@@ -1928,37 +1774,10 @@
                 const spriteSet = SPRITES[zombie.spriteKey];
                 const sprite = zombie.facingRight ? spriteSet.right : spriteSet.left;
                 this.drawSprite(sprite, Math.floor(zombie.x), Math.floor(zombie.y), zombie.width, zombie.height);
-                this.renderEntityHealthBar(zombie);
             });
         }
 
-        renderEntityHealthBar(entity) {
-            const barWidth = entity.width;
-            const barHeight = 4;
-            const barX = Math.floor(entity.x);
-            const barY = Math.floor(entity.y) - 6;
-
-            // Render shield bar for tank zombies
-            if (entity.shieldHP !== undefined && entity.shieldHP > 0) {
-                this.renderShieldBar(entity, barX, barY - 8, barWidth, barHeight);
-            }
-
-            // Render health bar
-            this.renderHealthBarAt(barX, barY, barWidth, barHeight, entity.hp, entity.maxHP);
-        }
-
-        renderShieldBar(entity, x, y, width, height) {
-            const shieldRatio = entity.shieldHP / entity.maxShieldHP;
-            
-            this.ctx.fillStyle = '#444';
-            this.ctx.fillRect(x, y, width, height);
-            
-            this.ctx.fillStyle = shieldRatio > 0.5 ? '#8B4513' : 
-                                (shieldRatio > 0.2 ? '#A0522D' : '#654321');
-            this.ctx.fillRect(x, y, Math.floor(width * shieldRatio), height);
-        }
-
-        renderHealthBarAt(x, y, width, height, hp, maxHP) {
+        drawHealthBar(x, y, width, height, hp, maxHP) {
             const hpRatio = hp / maxHP;
             
             this.ctx.fillStyle = '#222';
@@ -2045,12 +1864,13 @@
             if (!announcement.active) return;
             
             this.ctx.save();
-            this.ctx.font = 'bold 48px monospace';
+            this.ctx.font = 'bold 48px "Courier New", monospace';
             this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
             this.ctx.globalAlpha = Math.min(1, announcement.timer / 0.5);
             
-            const centerX = this.game.canvas.width / 2;
-            const centerY = this.game.canvas.height / 2;
+            const centerX = CONFIG.WORLD_WIDTH / 2;
+            const centerY = CONFIG.WORLD_HEIGHT / 2;
             
             this.ctx.fillStyle = PALETTE.black;
             this.ctx.fillText(announcement.text, centerX + 2, centerY + 2);
@@ -2114,87 +1934,125 @@
             this.ctx.fillStyle = '#111';
             this.ctx.fillRect(x - 2, y - 2, width + 4, height + 4);
 
-            this.renderHealthBarAt(x, y, width, height, player.hp, player.maxHP);
+            this.drawHealthBar(x, y, width, height, player.hp, player.maxHP);
 
             this.ctx.strokeStyle = '#555';
             this.ctx.strokeRect(x, y, width, height);
 
-            this.ctx.font = '14px monospace';
-            this.ctx.fillStyle = '#bbb';
-            this.ctx.fillText(`HP: ${player.hp}/${player.maxHP}`, x, y - 4);
+            // Health bar only - no text
         }
 
         renderWeaponSlots() {
             const slots = ['primary', 'secondary', 'melee'];
             const weaponSystem = this.game.weaponSystem;
-            const startX = 10;
-            const startY = 48;
-
-            slots.forEach((slot, index) => {
-                this.renderWeaponSlot(slot, index, startX, startY, weaponSystem);
+            
+            // Table structure: 3 columns (weapons) x 3 rows (label, name, ammo)
+            // Position to the right of the health bar (health bar ends at x = 270)
+            const tableX = 290;  // 10 + 260 + 20 (health bar start + width + spacing)
+            const tableY = 20;   // Same top padding as health bar
+            const colWidth = 200;  // Width of each column
+            const rowHeight = 20;  // Height of each row
+            
+            // Render each column (weapon slot)
+            slots.forEach((slot, colIndex) => {
+                const x = tableX + (colIndex * colWidth);
+                
+                // Row 1: Slot labels (PRIMARY, SECONDARY, MELEE)
+                this.renderSlotLabel(slot, colIndex, x, tableY, weaponSystem, colWidth, rowHeight);
+                
+                // Row 2: Weapon names
+                this.renderWeaponName(slot, x, tableY + rowHeight, weaponSystem, colWidth, rowHeight);
+                
+                // Row 3: Ammo/reload info
+                this.renderWeaponAmmoInfo(slot, x, tableY + (rowHeight * 2), weaponSystem, colWidth, rowHeight);
             });
         }
 
-        renderWeaponSlot(slot, index, startX, startY, weaponSystem) {
-            const x = startX + index * (CONFIG.WEAPON_SLOT_WIDTH + CONFIG.WEAPON_SLOT_PADDING);
-            const y = startY;
-            const width = CONFIG.WEAPON_SLOT_WIDTH;
-            const height = CONFIG.WEAPON_SLOT_HEIGHT;
-
+        renderSlotLabel(slot, index, x, y, weaponSystem, colWidth, rowHeight) {
             this.ctx.save();
+            
+            const isSelected = slot === weaponSystem.currentSlot;
+            this.ctx.fillStyle = isSelected ? '#ffd54a' : '#fff';
+            this.ctx.font = 'bold 16px "Courier New", monospace';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.textAlign = 'center';
+            
+            const centerX = x + (colWidth / 2);
+            const centerY = y + (rowHeight / 2);
+            this.ctx.fillText(`${index + 1}. ${slot.toUpperCase()}`, centerX, centerY);
+            
+            this.ctx.restore();
+        }
 
-            // Background
-            this.ctx.fillStyle = '#111';
-            this.ctx.fillRect(x, y, width, height);
-
-            // Border
-            this.ctx.strokeStyle = slot === weaponSystem.currentSlot ? '#ffd54a' : '#555';
-            this.ctx.lineWidth = slot === weaponSystem.currentSlot ? 2 : 1;
-            this.ctx.strokeRect(x, y, width, height);
-
-            // Slot label
-            this.ctx.fillStyle = '#bbb';
-            this.ctx.font = '14px monospace';
-            this.ctx.fillText(`${index + 1}. ${slot.toUpperCase()}`, x + 8, y + 14);
-
-            // Weapon info
+        renderWeaponName(slot, x, y, weaponSystem, colWidth, rowHeight) {
+            this.ctx.save();
+            
             const weapon = weaponSystem.inventory[slot];
             if (weapon) {
                 this.ctx.fillStyle = '#9cf';
-                this.ctx.font = '14px monospace';
-                this.ctx.fillText(weapon.name, x + 8, y + 32);
+                this.ctx.font = 'bold 16px "Courier New", monospace';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.textAlign = 'center';
                 
-                if (weapon.type !== 'melee' && weapon.ammo) {
-                    this.renderWeaponAmmoInfo(weapon, x, y);
-                }
+                const centerX = x + (colWidth / 2);
+                const centerY = y + (rowHeight / 2);
+                this.ctx.fillText(weapon.name, centerX, centerY);
             } else {
                 this.ctx.fillStyle = '#888';
-                this.ctx.font = '14px monospace';
-                this.ctx.fillText('Empty', x + 8, y + 32);
+                this.ctx.font = 'bold 16px "Courier New", monospace';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.textAlign = 'center';
+                
+                const centerX = x + (colWidth / 2);
+                const centerY = y + (rowHeight / 2);
+                this.ctx.fillText('Empty', centerX, centerY);
             }
             
             this.ctx.restore();
         }
 
-        renderWeaponAmmoInfo(weapon, x, y) {
-            if (weapon.isReloading) {
-                this.renderReloadingBar(weapon, x, y);
-            } else {
-                this.ctx.fillStyle = '#ffd54a';
-                this.ctx.font = '12px monospace';
-                this.ctx.fillText(`${weapon.ammo.current}/${weapon.ammo.max}`, x + 8, y + 50);
+        renderWeaponAmmoInfo(slot, x, y, weaponSystem, colWidth, rowHeight) {
+            this.ctx.save();
+            
+            const weapon = weaponSystem.inventory[slot];
+            if (weapon && weapon.type !== 'melee' && weapon.ammo) {
+                if (weapon.isReloading) {
+                    this.renderReloadingBar(weapon, x, y, colWidth, rowHeight);
+                } else {
+                    this.ctx.fillStyle = '#ffd54a';
+                    this.ctx.font = 'bold 16px "Courier New", monospace';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.textAlign = 'center';
+                    
+                    const centerX = x + (colWidth / 2);
+                    const centerY = y + (rowHeight / 2);
+                    this.ctx.fillText(`${weapon.ammo.current}/${weapon.ammo.max}`, centerX, centerY);
+                }
             }
+            
+            this.ctx.restore();
         }
 
-        renderReloadingBar(weapon, x, y) {
-            this.ctx.fillStyle = '#ff5555';
-            this.ctx.font = '10px monospace';
-            this.ctx.fillText('RELOADING', x + 8, y + 48);
+
+
+        renderReloadingBar(weapon, x, y, colWidth, rowHeight) {
+            this.ctx.save();
             
-            const barWidth = 94;
-            const barHeight = 4;
-            const barX = x + 8;
-            const barY = y + 54;
+            // Reloading text
+            this.ctx.fillStyle = '#ff5555';
+            this.ctx.font = 'bold 14px "Courier New", monospace';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.textAlign = 'center';
+            
+            const centerX = x + (colWidth / 2);
+            const centerY = y + (rowHeight / 2);
+            this.ctx.fillText('RELOADING', centerX, centerY);
+            
+            // Progress bar below the text
+            const barWidth = Math.min(80, colWidth - 20);
+            const barHeight = 3;
+            const barX = centerX - (barWidth / 2);
+            const barY = centerY + 12;
             
             // Background
             this.ctx.fillStyle = '#333';
@@ -2211,19 +2069,22 @@
             this.ctx.strokeStyle = '#555';
             this.ctx.lineWidth = 1;
             this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+            
+            this.ctx.restore();
         }
 
         renderWaveInfo() {
-            const buttonElement = document.getElementById('waveControl');
-            if (!buttonElement) return;
+            // Position to the right of the weapon HUD with consistent spacing
+            // Weapon HUD: starts at x=290, width=600px, ends at x=890
+            const waveX = 920;  // 890 + 20 (weapon HUD end + spacing)
+            const waveY = 20;   // Same top padding as health bar and weapon HUD
             
-            const buttonRect = buttonElement.getBoundingClientRect();
-            const waveX = buttonRect.left + (buttonRect.width / 2) - 40;
-            const waveY = buttonRect.bottom + 25;
-            
+            this.ctx.save();
             this.ctx.fillStyle = '#ffd54a';
-            this.ctx.font = 'bold 16px monospace';
+            this.ctx.font = 'bold 16px "Courier New", monospace';
+            this.ctx.textBaseline = 'top';
             this.ctx.fillText(`WAVE ${this.game.waveSystem.currentWave}`, waveX, waveY);
+            this.ctx.restore();
         }
 
         renderMerchantHint() {
@@ -2248,7 +2109,31 @@
         renderDebugInfo() {
             this.ctx.fillStyle = '#666';
             this.ctx.font = '10px monospace';
-            this.ctx.fillText(`v${CONFIG.GAME_VERSION}`, this.game.canvas.width - 80, 20);
+            this.ctx.fillText(`v${CONFIG.GAME_VERSION}`, CONFIG.WORLD_WIDTH - 80, 20);
+            
+            // Add scale and window info
+            if (this.game.currentScale !== undefined) {
+                this.ctx.font = 'bold 14px "Courier New", monospace';
+                this.ctx.textBaseline = 'top';
+                this.ctx.fillStyle = '#666';
+                this.ctx.fillText(`Scale: ${this.game.currentScale.toFixed(2)}`, CONFIG.WORLD_WIDTH - 80, 35);
+                this.ctx.fillText(`Window: ${window.innerWidth}x${window.innerHeight}`, CONFIG.WORLD_WIDTH - 80, 50);
+                this.ctx.fillText(`Mouse: ${Math.round(this.game.inputManager.mouse.x)},${Math.round(this.game.inputManager.mouse.y)}`, CONFIG.WORLD_WIDTH - 80, 65);
+            }
+            
+            // Show debug info only when DEBUG_MODE is enabled
+            if (CONFIG.DEBUG_MODE) {
+                if (this.game.currentScale !== undefined) {
+                    this.ctx.fillStyle = '#ff0000';
+                    this.ctx.font = 'bold 16px "Courier New", monospace';
+                    this.ctx.textBaseline = 'top';
+                    const canvas = this.game.canvas;
+                    const rect = canvas.getBoundingClientRect();
+                    this.ctx.fillText(`Canvas Pos: ${Math.round(rect.left)},${Math.round(rect.top)}`, 10, 100);
+                    this.ctx.fillText(`Canvas Size: ${Math.round(rect.width)}x${Math.round(rect.height)}`, 10, 120);
+                    this.ctx.fillText(`Scale: ${this.game.currentScale.toFixed(3)}`, 10, 140);
+                }
+            }
             
             if (CONFIG.DEBUG_MODE) {
                 this.renderHeadshotZones();
@@ -2275,15 +2160,17 @@
 
         renderGameOver() {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            this.ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+            this.ctx.fillRect(0, 0, CONFIG.WORLD_WIDTH, CONFIG.WORLD_HEIGHT);
 
             this.ctx.fillStyle = '#ff5555';
-            this.ctx.font = 'bold 32px monospace';
-            this.ctx.fillText('YOU DIED', this.game.canvas.width / 2 - 90, this.game.canvas.height / 2 - 6);
+            this.ctx.font = 'bold 32px "Courier New", monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('YOU DIED', CONFIG.WORLD_WIDTH / 2, CONFIG.WORLD_HEIGHT / 2);
 
             this.ctx.fillStyle = '#ccc';
-            this.ctx.font = '16px monospace';
-            this.ctx.fillText('Press R or Space to restart', this.game.canvas.width / 2 - 120, this.game.canvas.height / 2 + 24);
+            this.ctx.font = 'bold 18px "Courier New", monospace';
+            this.ctx.fillText('Press R or Space to restart', CONFIG.WORLD_WIDTH / 2, CONFIG.WORLD_HEIGHT / 2 + 40);
         }
 
         drawSprite(sprite, x, y, width, height) {
@@ -2397,14 +2284,14 @@
             const moveDir = (input.keys.a ? -1 : 0) + (input.keys.d ? 1 : 0);
             player.velocityX += (moveDir * CONFIG.PLAYER_MOVE_SPEED - player.velocityX) * 0.4;
             player.x += player.velocityX * dt;
-            player.x = Utils.clamp(player.x, 0, this.game.canvas.width - player.width);
+            player.x = Utils.clamp(player.x, 0, CONFIG.WORLD_WIDTH - player.width);
 
             // Vertical movement (gravity)
             player.velocityY += CONFIG.GRAVITY * dt;
             player.y += player.velocityY * dt;
 
             // Ground collision
-            const groundY = Utils.getGroundY(this.game.canvas.height, player.height);
+            const groundY = Utils.getGroundY(CONFIG.WORLD_HEIGHT, player.height);
             if (player.y > groundY) {
                 player.y = groundY;
                 player.velocityY = 0;
@@ -2553,10 +2440,10 @@
         }
 
         shouldRemoveBullet(bullet) {
-            const groundY = this.game.canvas.height - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
+            const groundY = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
             
-            return bullet.x < -10 || bullet.x > this.game.canvas.width + 10 ||
-                   bullet.y < -10 || bullet.y > this.game.canvas.height + 10 ||
+            return bullet.x < -10 || bullet.x > CONFIG.WORLD_WIDTH + 10 ||
+                   bullet.y < -10 || bullet.y > CONFIG.WORLD_HEIGHT + 10 ||
                    bullet.y >= groundY;
         }
 
@@ -2566,19 +2453,15 @@
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const projectile = projectiles[i];
 
-                // Apply gravity (same as bullets)
-                projectile.velocityY += CONFIG.BULLET_GRAVITY * dt;
-
-                // Update position
                 projectile.x += projectile.velocityX * dt;
                 projectile.y += projectile.velocityY * dt;
 
                 if (this.checkAcidPlayerHit(projectile)) {
                     this.game.applyDamage(projectile.damage);
-                    this.game.effectsManager.createHitEffect(projectile.x, projectile.y, 'acid');
+                    this.game.effectsManager.createHitEffect(projectile.x, projectile.y, 'blood');
                     projectiles.splice(i, 1);
                 } else if (this.shouldRemoveProjectile(projectile)) {
-                    this.game.effectsManager.createHitEffect(projectile.x, projectile.y, 'acid');
+                    this.game.effectsManager.createHitEffect(projectile.x, projectile.y, 'spark');
                     projectiles.splice(i, 1);
                 }
             }
@@ -2590,10 +2473,10 @@
         }
 
         shouldRemoveProjectile(projectile) {
-            const groundY = this.game.canvas.height - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
+            const groundY = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
             
-            return projectile.x < -10 || projectile.x > this.game.canvas.width + 10 ||
-                   projectile.y < -10 || projectile.y > this.game.canvas.height + 10 ||
+            return projectile.x < -10 || projectile.x > CONFIG.WORLD_WIDTH + 10 ||
+                   projectile.y < -10 || projectile.y > CONFIG.WORLD_HEIGHT + 10 ||
                    projectile.y >= groundY;
         }
 
@@ -2630,7 +2513,7 @@
                 const dirX = Math.sign(distanceX);
                 zombie.velocityX = dirX * zombie.speed;
                 zombie.x += zombie.velocityX * dt;
-                zombie.x = Utils.clamp(zombie.x, 0, this.game.canvas.width - zombie.width);
+                zombie.x = Utils.clamp(zombie.x, 0, CONFIG.WORLD_WIDTH - zombie.width);
             } else {
                 this.handleZombieStuck(zombie, dt);
             }
@@ -2651,19 +2534,14 @@
         updateSpitterAI(zombie, player, totalDistance, distanceX, dt) {
             const idealRange = zombie.attackRange;
             
-            console.log('Spitter AI - Distance:', totalDistance, 'Ideal range:', idealRange, 'Attack range:', idealRange * 0.7, 'to', idealRange * 1.2);
-            
             if (totalDistance < idealRange * 0.7) {
                 // Too close, back away
-                console.log('Spitter backing away');
                 this.moveZombie(zombie, -Math.sign(distanceX), zombie.speed * 0.8, dt);
             } else if (totalDistance > idealRange * 1.2) {
                 // Too far, move closer
-                console.log('Spitter moving closer');
                 this.moveZombie(zombie, Math.sign(distanceX), zombie.speed * 0.6, dt);
             } else {
                 // In range, stop and attack
-                console.log('Spitter in range, attacking!');
                 zombie.velocityX = 0;
                 this.trySpitterAttack(zombie, player);
             }
@@ -2678,8 +2556,6 @@
         trySpitterAttack(zombie, player) {
             const now = this.game.timeElapsed;
             if (now - zombie.lastAttackTime < zombie.attackCooldown) return;
-            
-            console.log('Spitter attacking! Distance:', Utils.getDistance(zombie.x, zombie.y, player.x, player.y));
             
             const direction = Utils.getDirection(
                 zombie.x + zombie.width / 2,
@@ -2706,7 +2582,7 @@
         }
 
         keepZombieOnGround(zombie) {
-            zombie.y = Utils.getGroundY(this.game.canvas.height, zombie.height);
+            zombie.y = Utils.getGroundY(CONFIG.WORLD_HEIGHT, zombie.height);
         }
 
         checkZombiePlayerCollision(zombie) {
@@ -2760,8 +2636,14 @@
         }
 
         static createZombie(x, type) {
+            console.log(`EntityFactory.createZombie called: type=${type}, x=${x}`);
             const template = ENEMY_TYPES[type];
-            if (!template) return null;
+            if (!template) {
+                console.error(`No template found for zombie type: ${type}`);
+                console.log('Available types:', Object.keys(ENEMY_TYPES));
+                return null;
+            }
+            console.log(`Template found:`, template);
 
             const zombie = {
                 x: x,
@@ -2791,7 +2673,6 @@
                     projectileSpeed: template.projectileSpeed,
                     projectileDamage: template.projectileDamage
                 });
-                console.log('Created spitter zombie with properties:', zombie);
             }
 
             if (type === 'zombieTank') {
@@ -2801,6 +2682,7 @@
                 });
             }
 
+            console.log(`Zombie object created:`, zombie);
             return zombie;
         }
     }
@@ -2822,9 +2704,6 @@
             this.lastTime = 0;
             this.deltaTime = 0;
             this.timeElapsed = 0;
-            
-            // Mobile orientation handling
-            this.initMobileOrientation();
             
             setTimeout(() => this.setupInitialPositions(), CONFIG.INITIAL_SETUP_DELAY);
             setTimeout(() => this.hideLoadingScreen(), CONFIG.LOADING_HIDE_DELAY);
@@ -2863,136 +2742,61 @@
         }
 
         setupCanvas() {
-            this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
+            // Set fixed world dimensions
+            this.canvas.width = CONFIG.WORLD_WIDTH;
+            this.canvas.height = CONFIG.WORLD_HEIGHT;
             
-            // Add orientation change listener for mobile devices
-            if (this.isMobileDevice()) {
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => this.resizeCanvas(), 100);
-                });
-            }
+            // Configure canvas for crisp rendering
+            this.ctx.imageSmoothingEnabled = false;
+            this.ctx.textRenderingOptimization = 'optimizeSpeed';
+            
+            // Handle window resizing for scaling only
+            this.handleWindowResize();
+            window.addEventListener('resize', () => this.handleWindowResize());
         }
 
-        initMobileOrientation() {
-            // Only run on mobile devices
-            if (!this.isMobileDevice()) {
-                return;
+        handleWindowResize() {
+            // Calculate the scale to fit the 1920x1080 world in the window
+            const padding = 0; // No padding for full-screen experience
+            const availableWidth = window.innerWidth - (padding * 2);
+            const availableHeight = window.innerHeight - (padding * 2);
+            
+            const scaleX = availableWidth / CONFIG.WORLD_WIDTH;
+            const scaleY = availableHeight / CONFIG.WORLD_HEIGHT;
+            const scale = Math.min(scaleX, scaleY, 1.0); // Don't scale up beyond 1x for crisp pixels
+            
+            // Calculate position to center the canvas
+            const scaledWidth = CONFIG.WORLD_WIDTH * scale;
+            const scaledHeight = CONFIG.WORLD_HEIGHT * scale;
+            const left = (window.innerWidth - scaledWidth) / 2;
+            const top = (window.innerHeight - scaledHeight) / 2;
+            
+            // Apply scaling and positioning
+            this.canvas.style.transform = `scale(${scale})`;
+            this.canvas.style.transformOrigin = 'top left';
+            this.canvas.style.position = 'fixed';
+            this.canvas.style.left = `${left}px`;
+            this.canvas.style.top = `${top}px`;
+            
+            // Store the current scale for mouse input calculations
+            this.currentScale = scale;
+            
+            // Debug logging (only when DEBUG_MODE is enabled)
+            if (CONFIG.DEBUG_MODE) {
+                console.log(`Window: ${window.innerWidth}x${window.innerHeight}, Scale: ${scale}, Scaled size: ${scaledWidth}x${scaledHeight}, Position: ${left},${top}`);
             }
-
-            // Check if device supports screen orientation
-            if (screen.orientation && screen.orientation.lock) {
-                // Try to lock to landscape
-                screen.orientation.lock('landscape').catch(() => {
-                    // If locking fails, show orientation warning
-                    this.showOrientationWarning();
-                });
-            } else {
-                // Fallback for devices without orientation API
-                this.checkOrientationFallback();
-            }
-
-            // Listen for orientation changes
-            window.addEventListener('orientationchange', () => {
-                this.handleOrientationChange();
-            });
-        }
-
-        isMobileDevice() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                   ('ontouchstart' in window) ||
-                   (window.innerWidth <= 768);
-        }
-
-        showOrientationWarning() {
-            const warning = document.getElementById('orientationWarning');
-            if (warning) {
-                warning.classList.add('show');
-            }
-        }
-
-        hideOrientationWarning() {
-            const warning = document.getElementById('orientationWarning');
-            if (warning) {
-                warning.classList.remove('show');
-            }
-        }
-
-        checkOrientationFallback() {
-            // Check if device is in portrait mode
-            if (window.innerHeight > window.innerWidth) {
-                this.showOrientationWarning();
-            } else {
-                this.hideOrientationWarning();
-            }
-        }
-
-        handleOrientationChange() {
-            // Only handle orientation changes on mobile devices
-            if (!this.isMobileDevice()) {
-                return;
-            }
-
-            setTimeout(() => {
-                if (window.innerHeight > window.innerWidth) {
-                    this.showOrientationWarning();
-                } else {
-                    this.hideOrientationWarning();
-                }
-            }, 100);
-        }
-
-        resizeCanvas() {
-            const oldWidth = this.canvas.width;
-
-            // For mobile devices, use the actual screen dimensions
-            if (this.isMobileDevice()) {
-                // Use screen dimensions for mobile to ensure full coverage
-                this.canvas.width = window.screen.width;
-                this.canvas.height = window.screen.height;
-            } else {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-            }
-
-            if (this.player && this.canvas.width < oldWidth) {
-                this.player.x = Math.min(this.player.x, this.canvas.width - 100);
-            }
-
-            if (this.zombies) {
-                this.zombies.forEach(zombie => {
-                    if (zombie.x + zombie.width > this.canvas.width) {
-                        zombie.x = this.canvas.width - zombie.width - 10;
-                    }
-                });
-            }
-
-            this.updatePositionsAfterResize();
         }
 
         updatePositionsAfterResize() {
-            if (this.player) {
-                const groundY = Utils.getGroundY(this.canvas.height, this.player.height);
-                if (this.player.onGround) {
-                    this.player.y = groundY;
-                }
-            }
-
-            if (this.shopSystem) {
-                const groundY = Utils.getGroundY(this.canvas.height, this.shopSystem.merchant.height);
-                this.shopSystem.setMerchantPosition(groundY);
-            }
+            // This method is no longer needed since world size is fixed
+            // But we keep it for compatibility and future use if needed
         }
 
         setupInitialPositions() {
-            if (this.canvas.width === 0 || this.canvas.height === 0) {
-                setTimeout(() => this.setupInitialPositions(), 100);
-                return;
-            }
+            // Use fixed world dimensions from CONFIG
+            this.player.x = Math.min(CONFIG.PLAYER_START_X, CONFIG.WORLD_WIDTH - 200);
             
-            this.player.x = Math.min(CONFIG.PLAYER_START_X, this.canvas.width - 200);
-            
-            const groundY = Utils.getGroundY(this.canvas.height, this.player.height);
+            const groundY = Utils.getGroundY(CONFIG.WORLD_HEIGHT, this.player.height);
             this.player.y = groundY;
             this.player.onGround = true;
             this.player.velocityY = 0;
@@ -3004,8 +2808,8 @@
             this.shopSystem.merchant.x = CONFIG.MERCHANT_X;
             this.shopSystem.setMerchantPosition(groundY);
             
-            // Spawn a spitter zombie for testing projectile physics
-            this.spawnZombie(this.canvas.width - 300, 'zombieSpitter');
+            // Ensure canvas is properly scaled after positioning
+            this.handleWindowResize();
         }
 
         hideLoadingScreen() {
@@ -3013,10 +2817,15 @@
         }
 
         spawnZombie(x, type = 'zombie') {
+            console.log(`Attempting to spawn zombie: type=${type}, x=${x}`);
             const zombie = EntityFactory.createZombie(x, type);
             if (zombie) {
-                zombie.y = Utils.getGroundY(this.canvas.height, zombie.height);
+                console.log(`Zombie created successfully:`, zombie);
+                zombie.y = Utils.getGroundY(CONFIG.WORLD_HEIGHT, zombie.height);
                 this.zombies.push(zombie);
+                console.log(`Zombie added to game. Total zombies: ${this.zombies.length}`);
+            } else {
+                console.error(`Failed to create zombie of type: ${type}`);
             }
         }
 
@@ -3067,6 +2876,9 @@
             this.waveSystem.reset();
             this.shopSystem.closeShop();
             this.setupInitialPositions();
+            
+            // Ensure canvas is properly scaled after restart
+            this.handleWindowResize();
         }
 
         update(deltaTime) {
@@ -3086,6 +2898,7 @@
 
         start() {
             this.lastTime = performance.now();
+            this.handleWindowResize(); // Ensure proper initial scaling
             this.gameLoop(this.lastTime);
         }
 
