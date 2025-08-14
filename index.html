@@ -1619,11 +1619,14 @@
             // Find the first touch that's not on mobile controls (movement stick)
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
-                const touchTarget = document.elementFromPoint(touch.clientX, touch.clientY);
                 
-                // Skip if touch is on mobile controls
-                if (touchTarget && touchTarget.closest('.mobile-controls')) {
-                    continue;
+                // Check if touch is within the movement stick area
+                if (this.mobileInput && this.mobileInput.leftStick.element) {
+                    const stickRect = this.mobileInput.leftStick.element.getBoundingClientRect();
+                    if (touch.clientX >= stickRect.left && touch.clientX <= stickRect.right &&
+                        touch.clientY >= stickRect.top && touch.clientY <= stickRect.bottom) {
+                        continue; // Skip movement stick touches
+                    }
                 }
                 
                 const rect = this.game.canvas.getBoundingClientRect();
@@ -1647,11 +1650,14 @@
             // Find the first touch that's not on mobile controls (movement stick)
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
-                const touchTarget = document.elementFromPoint(touch.clientX, touch.clientY);
                 
-                // Skip if touch is on mobile controls
-                if (touchTarget && touchTarget.closest('.mobile-controls')) {
-                    continue;
+                // Check if touch is within the movement stick area
+                if (this.mobileInput && this.mobileInput.leftStick.element) {
+                    const stickRect = this.mobileInput.leftStick.element.getBoundingClientRect();
+                    if (touch.clientX >= stickRect.left && touch.clientX <= stickRect.right &&
+                        touch.clientY >= stickRect.top && touch.clientY <= stickRect.bottom) {
+                        continue; // Skip movement stick touches
+                    }
                 }
                 
                 const rect = this.game.canvas.getBoundingClientRect();
