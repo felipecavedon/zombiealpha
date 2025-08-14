@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1, minimum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Zombie Survival - A pixel art action survival game">
     <meta name="author" content="Cavedon">
     <title>Zombie Survival - Alpha v3.0</title>
@@ -28,10 +28,13 @@
         @media (max-width: 767px) {
             html, body {
                 position: fixed;
-                width: 100%;
-                height: 100%;
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh; /* Dynamic viewport height for mobile */
                 overflow: hidden;
                 -webkit-overflow-scrolling: touch;
+                margin: 0;
+                padding: 0;
             }
         }
 
@@ -51,12 +54,16 @@
         /* Mobile-specific canvas adjustments */
         @media (max-width: 767px) {
             #gameCanvas {
-                width: 100%;
-                height: 100%;
                 position: fixed;
                 top: 0;
                 left: 0;
-                touch-action: none; /* Prevents default touch behaviors */
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh; /* Dynamic viewport height for mobile */
+                touch-action: none;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+                -webkit-tap-highlight-color: transparent;
             }
         }
 
@@ -2859,9 +2866,11 @@
             this.resizeCanvas();
             window.addEventListener('resize', () => this.resizeCanvas());
             
-            // Add visual viewport listener for mobile devices
-            if (this.isMobileDevice() && window.visualViewport) {
-                window.visualViewport.addEventListener('resize', () => this.resizeCanvas());
+            // Add orientation change listener for mobile devices
+            if (this.isMobileDevice()) {
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => this.resizeCanvas(), 100);
+                });
             }
         }
 
@@ -2891,7 +2900,8 @@
 
         isMobileDevice() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                   (window.innerWidth <= 768 && window.innerHeight <= 1024);
+                   ('ontouchstart' in window) ||
+                   (window.innerWidth <= 768);
         }
 
         showOrientationWarning() {
@@ -2935,10 +2945,11 @@
         resizeCanvas() {
             const oldWidth = this.canvas.width;
 
-            // Use visual viewport for mobile devices to handle browser UI elements
-            if (this.isMobileDevice() && window.visualViewport) {
-                this.canvas.width = window.visualViewport.width;
-                this.canvas.height = window.visualViewport.height;
+            // For mobile devices, use the actual screen dimensions
+            if (this.isMobileDevice()) {
+                // Use screen dimensions for mobile to ensure full coverage
+                this.canvas.width = window.screen.width;
+                this.canvas.height = window.screen.height;
             } else {
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight;
