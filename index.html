@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Zombie Survival - A pixel art action survival game">
     <meta name="author" content="Cavedon">
-    <title>Zombie Survival - Alpha v3.0</title>
+    <title>Zombie Survival - Alpha v4.0</title>
     <style>
         /* =====================================================
            RESET & BASE STYLES
@@ -271,12 +271,50 @@
         }
 
         .shopItemsContainer {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
+            display: table;
+            width: 100%;
             margin: 20px 0;
-            flex-wrap: wrap;
-            align-items: stretch;
+            border-collapse: collapse;
+        }
+
+        .shopTableRow {
+            display: table-row;
+        }
+
+        .shopTableHeader {
+            display: table-cell;
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            font-weight: bold;
+            color: #fff;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .shopTableCell {
+            display: table-cell;
+            vertical-align: top;
+            padding: 10px;
+            border: 1px solid #00ff00;
+            width: 50%;
+        }
+
+        .shopTableHeader:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        .shopTableHeader:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        .shopTableCell:first-child {
+            border-bottom-left-radius: 8px;
+        }
+
+        .shopTableCell:last-child {
+            border-bottom-right-radius: 8px;
         }
 
         .shopItem {
@@ -284,15 +322,11 @@
             border: 2px solid #00ff00;
             border-radius: 8px;
             padding: 15px;
-            margin: 10px 5px;
+            margin: 8px 0;
             cursor: pointer;
             transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex: 1;
-            min-width: 180px;
-            max-width: 300px;
+            display: block;
+            width: 100%;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -330,6 +364,44 @@
         .shopItemStats {
             font-size: 12px;
             color: #ccc;
+        }
+
+        .slotSelectionButtons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .slotButton {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            color: #00ff00;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-family: "Courier New", monospace;
+        }
+
+        .slotButton:hover {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff40;
+        }
+
+        .slotButton.equipped {
+            background: rgba(255, 255, 0, 0.2);
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+
+        .slotButton.selected {
+            background: rgba(0, 255, 0, 0.3);
+            border-color: #00ff40;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
         }
 
         .shopControls {
@@ -493,6 +565,28 @@
                 margin: 5px;
                 min-height: 60px;
                 min-width: 140px;
+            }
+
+            /* Mobile table layout adjustments */
+            .shopItemsContainer {
+                display: block;
+            }
+            
+            .shopTableRow {
+                display: block;
+                margin-bottom: 20px;
+            }
+            
+            .shopTableHeader,
+            .shopTableCell {
+                display: block;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .shopTableHeader {
+                text-align: center;
+                margin-bottom: 15px;
             }
         }
         
@@ -659,7 +753,6 @@
                 <div id="shopItems"></div>
             </div>
             <div class="shopControls">
-                <button id="buyButton" class="shopButton" disabled>SWAP WEAPON</button>
                 <button id="backToMenuButton" class="shopButton">BACK</button>
             </div>
         </div>
@@ -976,7 +1069,7 @@
         rifle: {
             id: 'rifle_mk1',
             name: 'Assault Rifle',
-            type: 'primary',
+            type: 'main',
             damage: 7,
             fireRate: 10,
             bulletSpeed: 1100,
@@ -992,7 +1085,7 @@
         pistol: {
             id: 'pistol_basic',
             name: 'Pistol',
-            type: 'secondary',
+            type: 'side',
             damage: 5,
             fireRate: 4,
             bulletSpeed: 900,
@@ -1008,7 +1101,7 @@
         knife: {
             id: 'knife_mk1',
             name: 'Combat Knife',
-            type: 'melee',
+            type: 'side',
             damage: 15,
             range: 32,
             cooldown: 0.38,
@@ -1019,7 +1112,7 @@
         shotgun: {
             id: 'shotgun_basic',
             name: 'Shotgun',
-            type: 'primary',
+            type: 'main',
             damage: 36,
             fireRate: 1.5,
             bulletSpeed: 700,
@@ -1037,7 +1130,7 @@
         smg: {
             id: 'smg_basic',
             name: 'SMG',
-            type: 'primary',
+            type: 'side',
             damage: 4,
             fireRate: 15,
             bulletSpeed: 950,
@@ -1053,7 +1146,7 @@
         sniper: {
             id: 'sniper_basic',
             name: 'Sniper Rifle',
-            type: 'primary',
+            type: 'main',
             damage: 50,
             fireRate: 1,
             bulletSpeed: 2500,
@@ -1069,7 +1162,7 @@
         minigun: {
             id: 'minigun_basic',
             name: 'Minigun',
-            type: 'primary',
+            type: 'main',
             damage: 6,
             fireRate: 20,
             bulletSpeed: 1000,
@@ -1088,7 +1181,7 @@
         shotgun: {
             id: 'shotgun_basic',
             name: 'Shotgun',
-            type: 'primary',
+            type: 'main',
             price: 0,
             weapon: { ...WEAPONS.shotgun },
             stats: `DMG: ${WEAPONS.shotgun.damage} | RATE: ${WEAPONS.shotgun.fireRate}/s | RANGE: ${WEAPONS.shotgun.effectiveRange}`
@@ -1096,7 +1189,7 @@
         assaultRifle: {
             id: 'rifle_mk1',
             name: 'Assault Rifle',
-            type: 'primary',
+            type: 'main',
             price: 0,
             weapon: { ...WEAPONS.rifle },
             stats: `DMG: ${WEAPONS.rifle.damage} | RATE: ${WEAPONS.rifle.fireRate}/s | RANGE: ${WEAPONS.rifle.effectiveRange}`
@@ -1104,7 +1197,7 @@
         smg: {
             id: 'smg_basic',
             name: 'SMG',
-            type: 'primary',
+            type: 'side',
             price: 0,
             weapon: { ...WEAPONS.smg },
             stats: `DMG: ${WEAPONS.smg.damage} | RATE: ${WEAPONS.smg.fireRate}/s | RANGE: ${WEAPONS.smg.effectiveRange}`
@@ -1112,7 +1205,7 @@
         sniper: {
             id: 'sniper_basic',
             name: 'Sniper Rifle',
-            type: 'primary',
+            type: 'main',
             price: 0,
             weapon: { ...WEAPONS.sniper },
             stats: `DMG: ${WEAPONS.sniper.damage} | RATE: ${WEAPONS.sniper.fireRate}/s | RANGE: ${WEAPONS.sniper.effectiveRange}`
@@ -1120,10 +1213,26 @@
         minigun: {
             id: 'minigun_basic',
             name: 'Minigun',
-            type: 'primary',
+            type: 'main',
             price: 0,
             weapon: { ...WEAPONS.minigun },
             stats: `DMG: ${WEAPONS.minigun.damage} | RATE: ${WEAPONS.minigun.fireRate}/s | RANGE: ${WEAPONS.minigun.effectiveRange}`
+        },
+        pistol: {
+            id: 'pistol_basic',
+            name: 'Pistol',
+            type: 'side',
+            price: 0,
+            weapon: { ...WEAPONS.pistol },
+            stats: `DMG: ${WEAPONS.pistol.damage} | RATE: ${WEAPONS.pistol.fireRate}/s | RANGE: ${WEAPONS.pistol.effectiveRange}`
+        },
+        knife: {
+            id: 'knife_mk1',
+            name: 'Combat Knife',
+            type: 'side',
+            price: 0,
+            weapon: { ...WEAPONS.knife },
+            stats: `DMG: ${WEAPONS.knife.damage} | RATE: ${WEAPONS.knife.fireRate}/s | RANGE: ${WEAPONS.knife.effectiveRange}`
         }
     };
 
@@ -1531,7 +1640,7 @@
             const currentSlot = weaponSystem.currentSlot;
             
             // Define the order to cycle through weapons
-            const weaponOrder = ['primary', 'secondary', 'melee'];
+            const weaponOrder = ['main1', 'main2', 'side'];
             const currentIndex = weaponOrder.indexOf(currentSlot);
             const nextIndex = (currentIndex + 1) % weaponOrder.length;
             const nextSlot = weaponOrder[nextIndex];
@@ -1759,9 +1868,9 @@
 
             const keyActions = {
                 'w': () => this.handleJump(),
-                '1': () => this.game.weaponSystem.switchSlot('primary'),
-                '2': () => this.game.weaponSystem.switchSlot('secondary'),
-                '3': () => this.game.weaponSystem.switchSlot('melee'),
+                '1': () => this.game.weaponSystem.switchSlot('main1'),
+                '2': () => this.game.weaponSystem.switchSlot('main2'),
+                '3': () => this.game.weaponSystem.switchSlot('side'),
                 'r': () => this.handleReload(),
                 'e': () => this.game.shopSystem.tryOpenShop(),
                 ' ': () => this.handleRestart()
@@ -1959,15 +2068,15 @@
     class WeaponSystem {
         constructor(game) {
             this.game = game;
-            this.currentSlot = 'primary';
+            this.currentSlot = 'main';
             this.inventory = this.initializeInventory();
         }
 
         initializeInventory() {
             return {
-                primary: this.createWeaponInstance(WEAPONS.rifle),
-                secondary: this.createWeaponInstance(WEAPONS.pistol),
-                melee: this.createWeaponInstance(WEAPONS.knife)
+                main1: this.createWeaponInstance(WEAPONS.rifle),
+                main2: this.createWeaponInstance(WEAPONS.sniper),
+                side: this.createWeaponInstance(WEAPONS.pistol)
             };
         }
 
@@ -2001,7 +2110,21 @@
         }
 
         getCurrentWeapon() {
-            return this.inventory[this.currentSlot];
+            // Safety check to ensure inventory is initialized
+            if (!this.inventory || Object.keys(this.inventory).length === 0) {
+                return null;
+            }
+            
+            const weapon = this.inventory[this.currentSlot];
+            if (!weapon) {
+                // Fallback to first available slot without console warning
+                const firstSlot = Object.keys(this.inventory)[0];
+                if (firstSlot) {
+                    this.currentSlot = firstSlot;
+                    return this.inventory[firstSlot];
+                }
+            }
+            return weapon;
         }
 
         update() {
@@ -2011,7 +2134,9 @@
             if (!isShooting) return;
 
             const weapon = this.getCurrentWeapon();
-            if (weapon.type === 'melee') {
+            if (!weapon) return; // Safety check to prevent errors
+            
+            if (weapon.id === 'knife_mk1' || weapon.range) {
                 this.tryMeleeAttack(weapon);
             } else {
                 this.tryFireWeapon(weapon);
@@ -2030,16 +2155,19 @@
         }
 
         canFire(weapon) {
+            if (!weapon) return false; // Safety check
             const now = this.game.timeElapsed;
             const cooldown = 1 / weapon.fireRate;
             return now - weapon.lastShot >= cooldown && !weapon.isReloading;
         }
 
         isOutOfAmmo(weapon) {
+            if (!weapon) return true; // Safety check
             return weapon.ammo && weapon.ammo.current <= 0;
         }
 
         handleEmptyWeapon(weapon) {
+            if (!weapon) return; // Safety check
             if (!weapon.emptyClickPlayed && !weapon.wasFiring) {
                 this.game.audioManager.playSound('empty');
                 weapon.emptyClickPlayed = true;
@@ -2236,7 +2364,8 @@
 
         canReload(weapon) {
             return weapon && 
-                   weapon.type !== 'melee' && 
+                   weapon.id !== 'knife_mk1' && 
+                   !weapon.range &&
                    weapon.ammo && 
                    weapon.ammo.current < weapon.ammo.max && 
                    !weapon.isReloading;
@@ -2269,6 +2398,19 @@
                 weapon.wasFiring = false;
             });
         }
+
+        reloadAllWeapons() {
+            Object.values(this.inventory).forEach(weapon => {
+                // Only reload weapons that have ammo (not melee weapons like knife)
+                if (weapon.ammo && weapon.ammo.max !== Infinity) {
+                    weapon.ammo.current = weapon.ammo.max;
+                    weapon.isReloading = false;
+                    weapon.reloadStartTime = null;
+                    weapon.reloadEndTime = null;
+                }
+            });
+            console.log('All weapons reloaded to full ammo!');
+        }
     }
 
     // =====================================================
@@ -2279,6 +2421,7 @@
             this.game = game;
             this.shopOpen = false;
             this.selectedShopItem = null;
+            this.selectedSlot = null;
             this.merchant = this.createMerchant();
             this.initializeUI();
         }
@@ -2300,7 +2443,6 @@
             document.getElementById('weaponShopOption').addEventListener('click', () => this.openWeaponShop());
             
             // Weapon shop controls
-            document.getElementById('buyButton').addEventListener('click', () => this.buySelectedItem());
             document.getElementById('backToMenuButton').addEventListener('click', () => this.showMainMenu());
             
             // Close button
@@ -2337,7 +2479,6 @@
 
         openShop() {
             this.shopOpen = true;
-            this.selectedShopItem = null;
             this.showMainMenu();
             document.getElementById('shopInterface').style.display = 'block';
         }
@@ -2370,7 +2511,6 @@
 
         closeShop() {
             this.shopOpen = false;
-            this.selectedShopItem = null;
             document.getElementById('shopInterface').style.display = 'none';
         }
 
@@ -2378,11 +2518,55 @@
             const container = document.getElementById('shopItems');
             container.innerHTML = '';
             
+            // Create table structure
+            const table = document.createElement('div');
+            table.className = 'shopItemsContainer';
+            
+            // Row 1: Headers
+            const headerRow = document.createElement('div');
+            headerRow.className = 'shopTableRow';
+            
+            const mainHeader = document.createElement('div');
+            mainHeader.className = 'shopTableHeader';
+            mainHeader.textContent = 'Main';
+            
+            const sideHeader = document.createElement('div');
+            sideHeader.className = 'shopTableHeader';
+            sideHeader.textContent = 'Side';
+            
+            headerRow.appendChild(mainHeader);
+            headerRow.appendChild(sideHeader);
+            table.appendChild(headerRow);
+            
+            // Row 2: Weapons
+            const weaponsRow = document.createElement('div');
+            weaponsRow.className = 'shopTableRow';
+            
+            const mainCell = document.createElement('div');
+            mainCell.className = 'shopTableCell';
+            
+            const sideCell = document.createElement('div');
+            sideCell.className = 'shopTableCell';
+            
+            // Add main weapons to main cell
             Object.values(SHOP_ITEMS).forEach(item => {
-                container.appendChild(this.createShopItemElement(item));
+                if (item.type === 'main') {
+                    mainCell.appendChild(this.createShopItemElement(item));
+                }
             });
             
-            document.getElementById('buyButton').disabled = true;
+            // Add side weapons to side cell
+            Object.values(SHOP_ITEMS).forEach(item => {
+                if (item.type === 'side') {
+                    sideCell.appendChild(this.createShopItemElement(item));
+                }
+            });
+            
+            weaponsRow.appendChild(mainCell);
+            weaponsRow.appendChild(sideCell);
+            table.appendChild(weaponsRow);
+            
+            container.appendChild(table);
         }
 
         createShopItemElement(item) {
@@ -2390,18 +2574,56 @@
             element.className = 'shopItem';
             element.dataset.itemId = item.id;
             
-            const isEquipped = this.game.weaponSystem.inventory.primary.id === item.id;
+            const weaponType = item.weapon.type;
+            const isMainWeapon = weaponType === 'main';
+            
+            let slotButtonsHtml = '';
+            let isAnySlotEquipped = false;
+            
+            if (isMainWeapon) {
+                // For main weapons, show slot selection buttons
+                const main1Equipped = this.game.weaponSystem.inventory.main1?.id === item.id;
+                const main2Equipped = this.game.weaponSystem.inventory.main2?.id === item.id;
+                isAnySlotEquipped = main1Equipped || main2Equipped;
+                
+                slotButtonsHtml = `
+                    <div class="slotSelectionButtons">
+                        <button class="slotButton ${main1Equipped ? 'equipped' : ''}" data-slot="main1">
+                            SLOT 1 ${main1Equipped ? '(EQUIPPED)' : ''}
+                        </button>
+                        <button class="slotButton ${main2Equipped ? 'equipped' : ''}" data-slot="main2">
+                            SLOT 2 ${main2Equipped ? '(EQUIPPED)' : ''}
+                        </button>
+                    </div>
+                `;
+            } else {
+                // For side weapons, check if equipped normally
+                isAnySlotEquipped = this.game.weaponSystem.inventory[weaponType]?.id === item.id;
+            }
             
             element.innerHTML = `
                 <div class="shopItemInfo">
-                    <div class="shopItemName">${item.name}${isEquipped ? ' (EQUIPPED)' : ''}</div>
+                    <div class="shopItemName">${item.name}${isAnySlotEquipped ? ' (EQUIPPED)' : ''}</div>
                     <div class="shopItemStats">${item.stats}</div>
+                    ${slotButtonsHtml}
                 </div>
             `;
             
-            if (isEquipped) {
+            if (isAnySlotEquipped) {
                 element.setAttribute('disabled', 'true');
+            } else if (isMainWeapon) {
+                // For main weapons, add click handlers to slot buttons
+                element.querySelectorAll('.slotButton').forEach(button => {
+                    if (!button.classList.contains('equipped')) {
+                        button.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const targetSlot = button.getAttribute('data-slot');
+                            this.selectShopItemWithSlot(item, targetSlot);
+                        });
+                    }
+                });
             } else {
+                // For side weapons, use old behavior
                 element.addEventListener('click', () => this.selectShopItem(item));
             }
             
@@ -2409,24 +2631,30 @@
         }
 
         selectShopItem(item) {
-            this.selectedShopItem = item;
+            // Automatically swap the side weapon
+            const weapon = item.weapon;
+            const targetSlot = item.weapon.type; // Default to weapon's natural slot
             
-            document.querySelectorAll('.shopItem').forEach(el => {
-                el.classList.remove('selected');
-            });
+            this.game.weaponSystem.inventory[targetSlot] = 
+                this.game.weaponSystem.createWeaponInstance(weapon);
+            this.game.weaponSystem.currentSlot = targetSlot;
             
-            document.querySelector(`[data-item-id="${item.id}"]`)?.classList.add('selected');
-            document.getElementById('buyButton').disabled = false;
+            // Refresh the shop display to show updated equipped status
+            this.updateShopInterface();
         }
 
-        buySelectedItem() {
-            if (!this.selectedShopItem) return;
+        selectShopItemWithSlot(item, targetSlot) {
+            // Automatically swap the weapon
+            const weapon = item.weapon;
+            this.game.weaponSystem.inventory[targetSlot] = 
+                this.game.weaponSystem.createWeaponInstance(weapon);
+            this.game.weaponSystem.currentSlot = targetSlot;
             
-            this.game.weaponSystem.inventory.primary = 
-                this.game.weaponSystem.createWeaponInstance(this.selectedShopItem.weapon);
-            this.game.weaponSystem.currentSlot = 'primary';
-            this.closeShop();
+            // Refresh the shop display to show updated equipped status
+            this.updateShopInterface();
         }
+
+
 
         setMerchantPosition(y) {
             this.merchant.y = y;
@@ -2584,6 +2812,9 @@
             this.gameStage = 'peaceful';
             this.isSpawningWave = false;
             this.clearAllTimers();
+            
+            // Reload all weapons instantly when wave completes
+            this.game.weaponSystem.reloadAllWeapons();
             
             // Show wave completion message
             console.log(`Wave ${this.currentWave - 1} completed! Return to computer to start Wave ${this.currentWave}`);
@@ -2833,7 +3064,7 @@
             const weaponSystem = this.game.weaponSystem;
             const currentWeapon = weaponSystem.getCurrentWeapon();
             
-            if (!currentWeapon || currentWeapon.type === 'melee' || !currentWeapon.isReloading) {
+            if (!currentWeapon || currentWeapon.id === 'knife_mk1' || currentWeapon.range || !currentWeapon.isReloading) {
                 return;
             }
             
@@ -2881,12 +3112,17 @@
         }
 
         renderWeapon(shake) {
+            // Safety check to ensure weapon system is ready
+            if (!this.game.weaponSystem || !this.game.weaponSystem.inventory) return;
+            
             const weapon = this.game.weaponSystem.getCurrentWeapon();
+            if (!weapon) return; // Safety check to prevent errors
+            
             const gunPos = this.game.weaponSystem.getGunPosition();
             const x = Math.floor(gunPos.x + shake.x);
             const y = Math.floor(gunPos.y + shake.y);
 
-            if (weapon.type === 'melee') {
+            if (weapon.id === 'knife_mk1' || weapon.range) {
                 const angle = this.game.player.facingRight ? 0 : Math.PI;
                 const offsetX = this.game.player.facingRight ? 4 : -4;
                 this.drawWeaponSprite(weapon.sprite, x + offsetX, y, angle);
@@ -3125,48 +3361,101 @@
         }
 
         renderWeaponSlots() {
-            const slots = ['primary', 'secondary', 'melee'];
+            const slots = ['main1', 'main2', 'side'];
             const weaponSystem = this.game.weaponSystem;
             const isMobile = MobileDetector.isMobile();
             const worldWidth = MobileDetector.getWorldWidth();
             
             // Mobile-responsive positioning and sizing
-            let tableX, colWidth;
+            let tableX, colWidth, colWidths;
+            let columnSpacing;
             
             if (isMobile) {
-                // On mobile, calculate optimal column width based on font metrics
-                const healthBarEnd = Math.max(180, Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60));
-                tableX = healthBarEnd;  // No spacing after health bar
-                
-                // Calculate width based on content and font size
-                // "2. SECONDARY" is typically the longest label text
-                // Using Courier New 16px bold, approximate 9px per character
-                const maxLabelChars = 12; // "2. SECONDARY" = 12 characters
+                // On mobile, center the weapon HUD with adaptive column widths
                 const charWidth = 9; // Courier New 16px approximate width
-                const padding = 10; // Small padding for readability
-                colWidth = (maxLabelChars * charWidth) + padding; // ~118px
+                const padding = 15; // Padding for better readability
+                columnSpacing = 10; // Consistent 10px spacing between columns
+                
+                // Calculate individual column widths based on actual weapon names
+                colWidths = slots.map(slot => {
+                    const weapon = weaponSystem.inventory[slot];
+                    if (weapon) {
+                        const nameLength = weapon.name.length;
+                        return (nameLength * charWidth) + padding;
+                    } else {
+                        return (8 * charWidth) + padding; // "Empty" = 5 chars + padding
+                    }
+                });
+                
+                // Calculate total width including spacing
+                const totalWidth = colWidths.reduce((sum, width) => sum + width, 0) + (columnSpacing * 2);
+                
+                // Center the entire weapon HUD
+                tableX = (worldWidth - totalWidth) / 2;
+                
+                // Ensure the weapon HUD doesn't overlap with the health bar
+                const healthBarWidth = Math.min(CONFIG.HP_BAR_WIDTH, worldWidth - 60);
+                const minTableX = healthBarWidth + 30; // Increased spacing after health bar
+                
+                if (tableX < minTableX) {
+                    tableX = minTableX;
+                }
             } else {
                 // Desktop: Position to the right of the health bar (health bar ends at x = 260)
                 tableX = 260;  // 0 + 260 (health bar start + width)
-                colWidth = 200;  // Width of each column
+                columnSpacing = 10; // Same 10px spacing as mobile for consistency
+                
+                // For desktop, also use adaptive column widths based on text content
+                const charWidth = 9; // Courier New 16px approximate width
+                const padding = 20; // Slightly more padding on desktop for better readability
+                
+                colWidths = slots.map(slot => {
+                    const weapon = weaponSystem.inventory[slot];
+                    if (weapon) {
+                        const nameLength = weapon.name.length;
+                        return (nameLength * charWidth) + padding;
+                    } else {
+                        return (8 * charWidth) + padding; // "Empty" = 5 chars + padding
+                    }
+                });
+                
+                // Position the weapon HUD 10px after the health bar ends
+                tableX = 260 + 10;
             }
             
-            const tableY = 5;   // 5px padding from top, aligned with health bar
-            const rowHeight = 20;  // Height of each row
-            const columnSpacing = isMobile ? 8 : 0; // Add spacing between columns on mobile
+            const tableY = isMobile ? 8 : 5;   // Slightly more padding on mobile for better touch targets
+            const rowHeight = isMobile ? 22 : 20;  // Slightly taller rows on mobile for better readability
             
             // Render each column (weapon slot)
             slots.forEach((slot, colIndex) => {
-                const x = tableX + (colIndex * (colWidth + columnSpacing));
+                // Safety check to ensure colWidths is defined
+                if (!colWidths || !colWidths[colIndex]) {
+                    console.warn('colWidths not properly defined for slot:', slot, 'index:', colIndex);
+                    return;
+                }
                 
-                // Row 1: Slot labels (PRIMARY, SECONDARY, MELEE)
-                this.renderSlotLabel(slot, colIndex, x, tableY, weaponSystem, colWidth, rowHeight);
+                let currentX = tableX;
                 
-                // Row 2: Weapon names
-                this.renderWeaponName(slot, x, tableY + rowHeight, weaponSystem, colWidth, rowHeight);
+                // Calculate x position based on previous column widths and spacing
+                for (let i = 0; i < colIndex; i++) {
+                    currentX += colWidths[i] + columnSpacing;
+                }
                 
-                // Row 3: Ammo/reload info
-                this.renderWeaponAmmoInfo(slot, x, tableY + (rowHeight * 2), weaponSystem, colWidth, rowHeight);
+                const currentColWidth = colWidths[colIndex];
+                
+                // Add background rectangle for each weapon slot on mobile (without borders)
+                if (isMobile) {
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    this.ctx.fillRect(currentX - 5, tableY - 5, currentColWidth + 10, (rowHeight * 2) + 10);
+                    this.ctx.restore();
+                }
+                
+                // Row 1: Weapon names (no slot labels)
+                this.renderWeaponName(slot, currentX, tableY, weaponSystem, currentColWidth, rowHeight);
+                
+                // Row 2: Ammo/reload info
+                this.renderWeaponAmmoInfo(slot, currentX, tableY + rowHeight, weaponSystem, currentColWidth, rowHeight);
             });
         }
 
@@ -3190,9 +3479,18 @@
             this.ctx.save();
             
             const weapon = weaponSystem.inventory[slot];
+            const isSelected = slot === weaponSystem.currentSlot;
+            
             if (weapon) {
-                this.ctx.fillStyle = '#9cf';
-                this.ctx.font = 'bold 16px "Courier New", monospace';
+                // Highlight selected weapon with different color and style
+                if (isSelected) {
+                    this.ctx.fillStyle = '#ffd54a'; // Yellow for selected weapon
+                    this.ctx.font = 'bold 18px "Courier New", monospace'; // Slightly larger font
+                } else {
+                    this.ctx.fillStyle = '#9cf'; // Blue for unselected weapons
+                    this.ctx.font = 'bold 16px "Courier New", monospace';
+                }
+                
                 this.ctx.textBaseline = 'middle';
                 this.ctx.textAlign = 'center';
                 
@@ -3217,7 +3515,7 @@
             this.ctx.save();
             
             const weapon = weaponSystem.inventory[slot];
-            if (weapon && weapon.type !== 'melee' && weapon.ammo) {
+            if (weapon && weapon.id !== 'knife_mk1' && !weapon.range && weapon.ammo) {
                 // Always show ammo count, reload bar now appears above player
                 this.ctx.fillStyle = weapon.isReloading ? '#888' : '#ffd54a';
                 this.ctx.font = 'bold 16px "Courier New", monospace';
@@ -3227,6 +3525,16 @@
                 const centerX = x + (colWidth / 2);
                 const centerY = y + (rowHeight / 2);
                 this.ctx.fillText(`${weapon.ammo.current}/∞`, centerX, centerY);
+            } else if (weapon) {
+                // For weapons without ammo (like knife), show a placeholder to maintain alignment
+                this.ctx.fillStyle = '#666';
+                this.ctx.font = 'bold 16px "Courier New", monospace';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.textAlign = 'center';
+                
+                const centerX = x + (colWidth / 2);
+                const centerY = y + (rowHeight / 2);
+                this.ctx.fillText('---', centerX, centerY);
             }
             
             this.ctx.restore();
@@ -3283,13 +3591,12 @@
             if (distance <= merchant.interactionRange) {
                 this.ctx.fillStyle = PALETTE.white;
                 this.ctx.font = '16px monospace';
-                this.ctx.textAlign = 'center';
+                this.ctx.textAlign = 'left';
                 
-                const merchantCenterX = merchant.x + merchant.width / 2;
+                const textX = merchant.x + merchant.width / 2; // Start text at the red line position
                 const textY = merchant.y - 10;
                 
-                this.ctx.fillText('Press E to access computer', merchantCenterX, textY);
-                this.ctx.textAlign = 'left';
+                this.ctx.fillText('Press E to access computer', textX, textY);
             }
         }
 
@@ -4416,7 +4723,7 @@
         restart() {
             this.initializeGameState();
             this.weaponSystem.inventory = this.weaponSystem.initializeInventory();
-            this.weaponSystem.currentSlot = 'secondary';
+            this.weaponSystem.currentSlot = 'main1';
             this.waveSystem.reset();
             this.shopSystem.closeShop();
             
@@ -4473,7 +4780,7 @@
         game.start();
         
         console.log(`%cZombie Survival Alpha v${CONFIG.GAME_VERSION}`, 'color: #7CFC00; font-size: 16px; font-weight: bold;');
-        console.log('%cControls: WASD to move, 1-2-3 to switch weapons, Mouse to aim/shoot, E near computer to access terminal', 'color: #9cf;');
+        console.log('%cControls: WASD to move, 1-2-3 to switch weapons, Mouse to aim/shoot, R to reload, E near computer to access terminal', 'color: #9cf;');
     });
     </script>
 </body>
