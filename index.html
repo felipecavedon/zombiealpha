@@ -1435,6 +1435,11 @@
         bulletPellet: '#ffcc00',
         muzzleFlash: '#fff9c4',
         
+        // Projectile Colors
+        plasma: '#00ffff',
+        rocket: '#ff4500',
+        explosion: '#ff8800',
+        
         // Effect Colors
         acid: '#00ff00',
         headshot: '#ff0000',
@@ -1620,15 +1625,25 @@
             right: null
         },
         weapons: {
-            assaultRifle: ["...b....","bbbbbbbb","bbb.b...","....b..."],
-            pistol: [".bbbbb..","..bb....","..b....."],
-            knife: ["....b...","....b...","...bbb..","....b..."],
-            shotgun: ["bbbbbbbb","b..bbbb."],
-            minigun: [".bb.........",".b..........",".bbb.b.b.bb.",".bbbbbbbbbb.",".bbb.b.b.bb."],
-            sniperRifle: ["...bbb....","bbbbbbbbbb","bbb......."],
-            smg: ["...b....",".bbbbbb.",".b..b...","....b..."],
-            plasmaGun: ["..bbbb..",".bbbbbbbb","bbbbbbbbbb",".bbbbbbbb","..bbbb.."],
-            rocketLauncher: ["...bbbb...","..bbbbbb..",".bbbbbbbb.","bbbbbbbbbb",".bbbbbbbb.","..bbbbbb..","...bbbb..."]
+            assaultRifle: ["...m....","mmmmmmmm","mmm.m...","....m..."],
+            pistol: [".mmmmm..","..mm....","..m....."],
+            knife: ["....m...","....m...","...mmm..","....m..."],
+            shotgun: ["mmmmmmmm","m..mmmm."],
+            minigun: [".mm.........",".m..........",".mmm.m.m.mm.",".mmmmmmmmmm.",".mmm.m.m.mm."],
+            sniperRifle: ["...mmm....","mmmmmmmmmm","mmm......."],
+            smg: ["...m....",".mmmmmm.",".m..m...","....m..."],
+            plasmaGun: [
+            "..m....",
+  "mmmmmmm",
+  "mmmmmmm",
+  ".m.mmm."
+            ],
+            rocketLauncher: [
+            ".......m",
+  "mmmmmmmm",
+  "mmmmmmmm",   
+  "........"
+            ]
         },
         effects: {
             blood: ["..r.....",".rrr...","..r....."],
@@ -1641,6 +1656,39 @@
                 "r...r"
             ],
             acid: ["..aa..",".aaaa.","aaaaa.","aaaaa.","..aa.."],
+            plasma: [
+                "..pp..",
+                ".pppp.",
+                "pppppp",
+                "pppppp",
+                ".pppp.",
+                "..pp.."
+            ],
+            rocket: [
+                "..mmm..",
+                ".mmmmm.",
+                "mmmmmmm",
+                "mmmmmmm",
+                ".mmmmm.",
+                "..mmm.."
+            ],
+            explosion: [
+                "....rrrrrr....",
+                "...rrrrrrrr...",
+                "..rrrrrrrrrr..",
+                ".rrrrrrrrrrrr.",
+                "rrrrrrrrrrrrrr",
+                "rrrrrrrrrrrrrr",
+                "rrrrrrrrrrrrrr",
+                "rrrrrrrrrrrrrr",
+                ".rrrrrrrrrrrr.",
+                "..rrrrrrrrrr..",
+                "...rrrrrrrr...",
+                "....rrrrrr....",
+                ".....rrrr......",
+                "......rr.......",
+                ".......r......."
+            ],
             shieldBreak: [".w.","w.w",".w."],
             fatExplosion: [
                 "..r.....r..........r",
@@ -1670,6 +1718,8 @@
         'Y': 'yellowLight',
         'l': 'bullet',
         'a': 'acid',
+        'p': 'plasma',
+        'R': 'rocket',
         'w': 'white',
         'W': 'wood',
         'm': 'gunMetal'
@@ -1794,7 +1844,7 @@
             effectiveRange: 120,
             accuracy: 0.99,
             sprite: 'sniperRifle',
-            ammo: { current: 5, max: 5, reserve: Infinity, type: 'sniper_ammo' },
+            ammo: { current: 10, max: 10, reserve: Infinity, type: 'sniper_ammo' },
             reloadTime: 3.5
         },
         minigun: {
@@ -1819,17 +1869,17 @@
             id: 'plasma_gun',
             name: 'Plasma Gun',
             type: 'main',
-            damage: 25,
-            fireRate: 3,
-            bulletSpeed: 800,
-            recoilKick: 12,
+            damage: 15,
+            fireRate: 5,
+            bulletSpeed: 1000,
+            recoilKick: 1,
             knockback: 180,
             flashTime: 0.06,
-            effectiveRange: 500,
-            accuracy: 0.85,
+            effectiveRange: 2000,
+            accuracy: 1,
             sprite: 'plasmaGun',
             unlocked: false,
-            price: 1500,
+            price: 1100,
             ammo: { current: 20, max: 20, reserve: Infinity, type: 'plasma_ammo' },
             reloadTime: 2.8
         },
@@ -1837,7 +1887,7 @@
             id: 'rocket_launcher',
             name: 'Rocket Launcher',
             type: 'main',
-            damage: 100,
+            damage: 500,
             fireRate: 0.8,
             bulletSpeed: 600,
             recoilKick: 35,
@@ -1847,7 +1897,7 @@
             accuracy: 0.90,
             sprite: 'rocketLauncher',
             unlocked: false,
-            price: 2300,
+            price: 1800,
             ammo: { current: 3, max: 3, reserve: Infinity, type: 'rocket_ammo' },
             reloadTime: 5.0
         }
@@ -2085,8 +2135,8 @@
                 smg: { duration: 0.06, decay: 45, gain: 0.35, frequency: 700 },
                 sniper: { duration: 0.15, decay: 25, gain: 3.0, frequency: 200 },
                 minigun: { duration: 0.05, decay: 50, gain: 0.25, frequency: 650 },
-                plasmaGun: { duration: 0.09, decay: 35, gain: 0.45, frequency: 300 },
-                rocketLauncher: { duration: 0.20, decay: 20, gain: 0.8, frequency: 150 },
+                plasmaGun: { duration: 0.12, decay: 25, gain: 0.6, frequency: 2000, harmonics: [4000, 6000, 8000] },
+                rocketLauncher: { duration: 0.35, decay: 15, gain: 1.2, frequency: 80, harmonics: [120, 160, 200] },
                 melee: { duration: 0.12, decay: 25, gain: 0.4, frequency: 1200 },
                 empty: { duration: 0.06, decay: 150, gain: 0.3, frequency: 1500 },
                 // Satisfying hit sounds for player feedback
@@ -3087,6 +3137,10 @@
 
             if (weapon.id === 'shotgun_basic') {
                 this.fireShotgun(gunPos, direction, weapon);
+            } else if (weapon.id === 'plasma_gun') {
+                this.firePlasmaShot(gunPos, direction, weapon);
+            } else if (weapon.id === 'rocket_launcher') {
+                this.fireRocket(gunPos, direction, weapon);
             } else {
                 this.fireSingleBullet(gunPos, direction, weapon);
             }
@@ -3115,6 +3169,12 @@
                     break;
                 case 'minigun_basic':
                     soundType = 'minigun';
+                    break;
+                case 'plasma_gun':
+                    soundType = 'plasmaGun';
+                    break;
+                case 'rocket_launcher':
+                    soundType = 'rocketLauncher';
                     break;
                 default:
                     soundType = 'pistol'; // fallback
@@ -3181,6 +3241,58 @@
                 damage: damage,
                 maxRange: weapon.effectiveRange,
                 isPellet: isPellet
+            });
+        }
+
+        firePlasmaShot(gunPos, direction, weapon) {
+            const finalDir = this.applyAccuracy(direction, weapon.accuracy);
+            this.createPlasmaProjectile(gunPos, finalDir, weapon.bulletSpeed, weapon.damage, weapon);
+        }
+
+        fireRocket(gunPos, direction, weapon) {
+            const finalDir = this.applyAccuracy(direction, weapon.accuracy);
+            this.createRocketProjectile(gunPos, finalDir, weapon.bulletSpeed, weapon.damage, weapon);
+        }
+
+        createPlasmaProjectile(gunPos, direction, speed, damage, weapon) {
+            const offset = 16;
+            this.game.plasmaProjectiles = this.game.plasmaProjectiles || [];
+            this.game.plasmaProjectiles.push({
+                x: gunPos.x + direction.x * offset,
+                y: gunPos.y + direction.y * offset,
+                velocityX: direction.x * speed,
+                velocityY: direction.y * speed,
+                damage: damage,
+                maxRange: weapon.effectiveRange,
+                traveledDistance: 0,
+                width: 8,
+                height: 8,
+                lifetime: weapon.effectiveRange / speed,
+                age: 0,
+                pierceCount: 0,
+                maxPierce: 3,
+                hitEnemies: [] // Track which enemies this projectile has already hit
+            });
+        }
+
+        createRocketProjectile(gunPos, direction, speed, damage, weapon) {
+            const offset = 20;
+            this.game.rocketProjectiles = this.game.rocketProjectiles || [];
+            this.game.rocketProjectiles.push({
+                x: gunPos.x + direction.x * offset,
+                y: gunPos.y + direction.y * offset,
+                velocityX: direction.x * speed,
+                velocityY: direction.y * speed,
+                damage: damage,
+                maxRange: weapon.effectiveRange,
+                traveledDistance: 0,
+                width: 12,
+                height: 6,
+                explosionRadius: 80,
+                lifetime: weapon.effectiveRange / speed,
+                age: 0,
+                direction: direction,
+                hitEnemies: [] // Track which enemies this projectile has already hit
             });
         }
 
@@ -3906,6 +4018,44 @@
             };
         }
 
+        createExplosionEffect(x, y, radius) {
+            // Create mushroom cloud explosion effect
+            const numEffects = 12;
+            
+            // Base explosion ring
+            for (let i = 0; i < numEffects; i++) {
+                const angle = (i / numEffects) * Math.PI * 2;
+                const distance = Math.random() * radius * 0.6;
+                const effectX = x + Math.cos(angle) * distance;
+                const effectY = y + Math.sin(angle) * distance;
+                
+                this.createHitEffect(effectX, effectY, 'explosion');
+            }
+            
+            // Mushroom cloud stem (vertical column)
+            const stemHeight = Math.floor(radius * 0.8);
+            for (let i = 0; i < stemHeight; i += 4) {
+                const effectX = x + (Math.random() - 0.5) * radius * 0.3;
+                const effectY = y - i;
+                
+                this.createHitEffect(effectX, effectY, 'explosion');
+            }
+            
+            // Mushroom cloud cap (wider top)
+            const capRadius = radius * 1.2;
+            for (let i = 0; i < numEffects * 2; i++) {
+                const angle = (i / (numEffects * 2)) * Math.PI * 2;
+                const distance = capRadius * (0.7 + Math.random() * 0.3);
+                const effectX = x + Math.cos(angle) * distance;
+                const effectY = y - stemHeight + Math.sin(angle) * radius * 0.4;
+                
+                this.createHitEffect(effectX, effectY, 'explosion');
+            }
+            
+            // Add intense screen shake for nuclear explosion
+            this.addScreenShake(25);
+        }
+
         getScreenShake() {
             if (this.screenShake <= 0) return { x: 0, y: 0 };
             return {
@@ -4172,6 +4322,8 @@
         renderProjectiles() {
             this.renderBullets();
             this.renderAcidProjectiles();
+            this.renderPlasmaProjectiles();
+            this.renderRocketProjectiles();
         }
 
         renderBullets() {
@@ -4196,6 +4348,44 @@
                     this.ctx.beginPath();
                     this.ctx.arc(Math.floor(projectile.x), Math.floor(projectile.y), 3, 0, Math.PI * 2);
                     this.ctx.fill();
+                }
+            });
+        }
+
+        renderPlasmaProjectiles() {
+            if (!this.game.plasmaProjectiles) return;
+            this.game.plasmaProjectiles.forEach(projectile => {
+                const sprite = SPRITES.effects.plasma;
+                if (sprite && sprite.length > 0) {
+                    this.drawSprite(sprite, Math.floor(projectile.x - 4), Math.floor(projectile.y - 4), 8, 8);
+                } else {
+                    this.ctx.fillStyle = PALETTE.plasma;
+                    this.ctx.beginPath();
+                    this.ctx.arc(Math.floor(projectile.x), Math.floor(projectile.y), 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            });
+        }
+
+        renderRocketProjectiles() {
+            if (!this.game.rocketProjectiles) return;
+            this.game.rocketProjectiles.forEach(projectile => {
+                const sprite = SPRITES.effects.rocket;
+                if (sprite && sprite.length > 0) {
+                    // Calculate rotation angle based on velocity direction
+                    const angle = Math.atan2(projectile.velocityY, projectile.velocityX);
+                    this.ctx.save();
+                    this.ctx.translate(Math.floor(projectile.x), Math.floor(projectile.y));
+                    this.ctx.rotate(angle);
+                    this.drawSprite(sprite, -6, -3, 12, 6);
+                    this.ctx.restore();
+                } else {
+                    this.ctx.fillStyle = PALETTE.rocket;
+                    this.ctx.fillRect(
+                        Math.floor(projectile.x - 6),
+                        Math.floor(projectile.y - 3),
+                        12, 6
+                    );
                 }
             });
         }
@@ -4418,16 +4608,26 @@
             const rightEdge = MobileDetector.getWorldWidth() - padding;
             const textX = rightEdge;
             const coinX = rightEdge - textWidth - spacing - coinSize;
-            const coinY = y - (coinSize * 0.75); // Vertically center with text
+            
+            // Center coin vertically with text height
+            const textHeight = fontSize;
+            const coinY = y + (textHeight - coinSize) / 2; // Center coin within text height
             
             // Draw coin sprite
             this.drawSprite(SPRITES.uiCoin, Math.floor(coinX), Math.floor(coinY), Math.floor(coinSize), Math.floor(coinSize));
             
-            // Draw gold amount
+            // Save context state before changing properties
+            this.ctx.save();
+            
+            // Draw gold amount with explicit baseline to ensure consistency
             this.ctx.font = `${fontSize}px 'Press Start 2P'`;
             this.ctx.fillStyle = PALETTE.yellowLight; // Use the brighter gold for text
             this.ctx.textAlign = 'right';
+            this.ctx.textBaseline = 'top'; // Explicitly set baseline for consistent positioning
             this.ctx.fillText(goldStr, textX, y);
+            
+            // Restore context state to prevent alignment issues
+            this.ctx.restore();
         }
         drawFuelBar(x, y, width, height, fuel, maxFuel) {
             const fuelRatio = Math.max(0, fuel / maxFuel);
@@ -4846,8 +5046,16 @@
             for (let row = 0; row < spriteHeight; row++) {
                 const line = sprite[row];
                 for (let col = 0; col < spriteWidth; col++) {
-                    if (line[col] === 'b') {
-                        this.ctx.fillStyle = PALETTE.gunMetal;
+                    const char = line[col];
+                    if (char !== '.') {
+                        // Use color mapping for all sprite characters
+                        const colorKey = SPRITE_COLOR_MAP[char];
+                        if (colorKey && PALETTE[colorKey]) {
+                            this.ctx.fillStyle = PALETTE[colorKey];
+                        } else {
+                            // Fallback to gunMetal for 'b' or unknown characters
+                            this.ctx.fillStyle = PALETTE.gunMetal;
+                        }
                         this.ctx.fillRect(
                             Math.floor(startX + col * pixelSize - 0.5),
                             Math.floor(startY + row * pixelSize - 0.5),
@@ -4874,6 +5082,8 @@
             this.updatePlayer(dt);
             this.updateBullets(dt);
             this.updateAcidProjectiles(dt);
+            this.updatePlasmaProjectiles(dt);
+            this.updateRocketProjectiles(dt);
             this.updateAcidPools(dt);
             this.updateZombies(dt);
         }
@@ -5167,6 +5377,246 @@
             const worldHeight = MobileDetector.getWorldHeight();
             const groundY = worldHeight - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
             return projectile.y >= groundY;
+        }
+
+        updatePlasmaProjectiles(dt) {
+            if (!this.game.plasmaProjectiles) return;
+            const projectiles = this.game.plasmaProjectiles;
+            
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+
+                // Update age and lifetime
+                projectile.age += dt;
+
+                // Apply mild gravity (less than bullets)
+                projectile.velocityY += CONFIG.BULLET_GRAVITY * 0.3 * dt;
+
+                // Update position
+                projectile.x += projectile.velocityX * dt;
+                projectile.y += projectile.velocityY * dt;
+                projectile.traveledDistance += Math.sqrt(projectile.velocityX * projectile.velocityX + projectile.velocityY * projectile.velocityY) * dt;
+
+                // Check zombie hits
+                const hitResult = this.checkPlasmaHits(projectile);
+                
+                if (hitResult.hit) {
+                    // Projectile has pierced through max enemies, remove it
+                    projectiles.splice(i, 1);
+                } else if (this.shouldRemovePlasmaProjectile(projectile)) {
+                    // Projectile hit ground, screen boundary, or reached max range
+                    this.game.effectsManager.createHitEffect(projectile.x, projectile.y, 'spark');
+                    projectiles.splice(i, 1);
+                }
+                // If hitResult.pierced is true, projectile continues flying through enemies
+            }
+        }
+
+        updateRocketProjectiles(dt) {
+            if (!this.game.rocketProjectiles) return;
+            const projectiles = this.game.rocketProjectiles;
+            
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+
+                // Update age and lifetime
+                projectile.age += dt;
+
+                // Apply gravity
+                projectile.velocityY += CONFIG.BULLET_GRAVITY * dt;
+
+                // Update position
+                projectile.x += projectile.velocityX * dt;
+                projectile.y += projectile.velocityY * dt;
+                projectile.traveledDistance += Math.sqrt(projectile.velocityX * projectile.velocityX + projectile.velocityY * projectile.velocityY) * dt;
+
+                // Check hits (zombies or ground)
+                const hitResult = this.checkRocketHits(projectile);
+                
+                if (hitResult.hit) {
+                    // Rocket hit an enemy, explode
+                    this.createRocketExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage);
+                    projectiles.splice(i, 1);
+                } else if (this.shouldRemoveRocketProjectile(projectile)) {
+                    // Rocket hit ground, screen boundary, or reached max range
+                    this.createRocketExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage);
+                    projectiles.splice(i, 1);
+                }
+                // If no hit and no environment collision, rocket continues flying
+            }
+        }
+
+        checkPlasmaHits(projectile) {
+            const zombies = this.game.zombies;
+            
+            for (let j = zombies.length - 1; j >= 0; j--) {
+                const zombie = zombies[j];
+                
+                // Skip if we've already hit this enemy
+                if (projectile.hitEnemies.includes(zombie)) {
+                    continue;
+                }
+                
+                if (this.isProjectileInBounds(projectile, zombie) && this.checkProjectilePixelPerfectCollision(projectile, zombie)) {
+                    const damage = projectile.damage;
+                    const zombieDied = this.game.damageZombie(zombie, damage);
+                    
+                    // Add this enemy to the hit list
+                    projectile.hitEnemies.push(zombie);
+                    
+                    // Increment pierce count
+                    projectile.pierceCount++;
+                    
+                    // Create hit effect
+                    this.game.effectsManager.createHitEffect(projectile.x, projectile.y, 'plasma');
+                    
+                    // Play plasma hit sound
+                    this.game.audioManager.playSound('bodyHit');
+                    
+                    // Only return hit if we've pierced through max enemies
+                    if (projectile.pierceCount >= projectile.maxPierce) {
+                        return { 
+                            hit: true, 
+                            type: 'plasma', 
+                            x: projectile.x, 
+                            y: projectile.y,
+                            damage,
+                            zombie
+                        };
+                    }
+                    
+                    // Continue piercing through enemies
+                    return { hit: false, pierced: true };
+                }
+            }
+            
+            return { hit: false };
+        }
+
+        checkRocketHits(projectile) {
+            const zombies = this.game.zombies;
+            
+            for (let j = zombies.length - 1; j >= 0; j--) {
+                const zombie = zombies[j];
+                
+                // Skip if we've already hit this enemy
+                if (projectile.hitEnemies.includes(zombie)) {
+                    continue;
+                }
+                
+                if (this.isProjectileInBounds(projectile, zombie) && this.checkProjectilePixelPerfectCollision(projectile, zombie)) {
+                    // Add this enemy to the hit list
+                    projectile.hitEnemies.push(zombie);
+                    
+                    return { 
+                        hit: true, 
+                        type: 'rocket', 
+                        x: projectile.x, 
+                        y: projectile.y,
+                        zombie
+                    };
+                }
+            }
+            
+            return { hit: false };
+        }
+
+        isProjectileInBounds(projectile, zombie) {
+            return projectile.x >= zombie.x - projectile.width/2 && 
+                   projectile.x <= zombie.x + zombie.width + projectile.width/2 &&
+                   projectile.y >= zombie.y - projectile.height/2 && 
+                   projectile.y <= zombie.y + zombie.height + projectile.height/2;
+        }
+
+        checkProjectilePixelPerfectCollision(projectile, zombie) {
+            const spriteSet = SPRITES[zombie.spriteKey];
+            const sprite = zombie.facingRight ? spriteSet.right : spriteSet.left;
+            
+            if (!sprite || sprite.length === 0) {
+                return false;
+            }
+
+            const collision = this.getProjectilePixelCollisionPoint(projectile, zombie, sprite);
+            return collision.hit;
+        }
+
+        getProjectilePixelCollisionPoint(projectile, zombie, sprite) {
+            const spriteWidth = sprite[0].length;
+            const spriteHeight = sprite.length;
+            const scaleX = Math.floor(zombie.width / spriteWidth);
+            const scaleY = Math.floor(zombie.height / spriteHeight);
+            const cellWidth = Math.max(1, scaleX);
+            const cellHeight = Math.max(1, scaleY);
+            
+            const originX = Math.floor(zombie.x + (zombie.width - spriteWidth * cellWidth) / 2);
+            const originY = Math.floor(zombie.y + (zombie.height - spriteHeight * cellHeight) / 2);
+            
+            const relativeX = Math.floor(projectile.x) - originX;
+            const relativeY = Math.floor(projectile.y) - originY;
+            
+            if (relativeX < 0 || relativeY < 0 || relativeX >= spriteWidth * cellWidth || relativeY >= spriteHeight * cellHeight) {
+                return { hit: false };
+            }
+            
+            const spriteX = Math.floor(relativeX / cellWidth);
+            const spriteY = Math.floor(relativeY / cellHeight);
+            
+            if (spriteY >= 0 && spriteY < sprite.length && spriteX >= 0 && spriteX < sprite[spriteY].length) {
+                const pixel = sprite[spriteY][spriteX];
+                return { hit: pixel !== '.', spriteX, spriteY };
+            }
+            
+            return { hit: false };
+        }
+
+
+
+        createRocketExplosion(x, y, radius, damage) {
+            // Create explosion effect
+            this.game.effectsManager.createExplosionEffect(x, y, radius);
+            
+            // Play explosion sound
+            this.game.audioManager.playSound('rocketLauncher'); // Deep, bassy explosion sound
+            
+            // Damage all zombies in radius
+            const zombies = this.game.zombies;
+            for (let i = zombies.length - 1; i >= 0; i--) {
+                const zombie = zombies[i];
+                const zombieCenterX = zombie.x + zombie.width / 2;
+                const zombieCenterY = zombie.y + zombie.height / 2;
+                const distance = Math.sqrt((x - zombieCenterX) ** 2 + (y - zombieCenterY) ** 2);
+                
+                if (distance <= radius) {
+                    // Calculate damage falloff based on distance
+                    const damageRatio = Math.max(0.3, 1 - (distance / radius));
+                    const explosionDamage = Math.floor(damage * damageRatio);
+                    
+                    this.game.damageZombie(zombie, explosionDamage);
+                    this.game.effectsManager.createHitEffect(zombieCenterX, zombieCenterY, 'explosion');
+                }
+            }
+        }
+
+        shouldRemovePlasmaProjectile(projectile) {
+            const worldHeight = MobileDetector.getWorldHeight();
+            const worldWidth = MobileDetector.getWorldWidth();
+            const groundY = worldHeight - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
+            
+            // Only remove plasma projectiles when they hit environment, not by age or distance
+            return projectile.x < -10 || projectile.x > worldWidth + 10 ||
+                   projectile.y < -10 || projectile.y > worldHeight + 10 ||
+                   projectile.y >= groundY;
+        }
+
+        shouldRemoveRocketProjectile(projectile) {
+            const worldHeight = MobileDetector.getWorldHeight();
+            const worldWidth = MobileDetector.getWorldWidth();
+            const groundY = worldHeight - CONFIG.GROUND_HEIGHT - CONFIG.GROUND_COLLISION_OFFSET;
+            
+            // Only remove rocket projectiles when they hit environment, not by age or distance
+            return projectile.x < -10 || projectile.x > worldWidth + 10 ||
+                   projectile.y < -10 || projectile.y > worldHeight + 10 ||
+                   projectile.y >= groundY;
         }
 
         createAcidPool(x, y) {
@@ -5594,6 +6044,8 @@
             this.playerGold = 0; // Unlimited gold
             this.acidProjectiles = [];
             this.acidPools = [];
+            this.plasmaProjectiles = [];
+            this.rocketProjectiles = [];
         }
 
         initializeSprites() {
@@ -5976,8 +6428,13 @@
             // playerGold is already set by initializeGameState(), no need to override it
             this.acidProjectiles = [];
             this.acidPools = [];
+            this.plasmaProjectiles = [];
+            this.rocketProjectiles = [];
             
             this.setupInitialPositions();
+            
+            // Reset canvas context properties to ensure consistent rendering
+            this.setupCanvas();
             
             // Ensure canvas is properly scaled after restart
             this.handleWindowResize();
