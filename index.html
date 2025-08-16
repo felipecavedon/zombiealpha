@@ -2271,8 +2271,8 @@
         constructor(game) {
             this.game = game;
             this.isActive = false;
-            this.leftStick = { x: 0, y: 0, active: false, element: null };
-            this.rightStick = { x: 0, y: 0, active: false, element: null };
+            this.leftStick = { x: 0, y: 0, active: false, element: null, touchId: null };
+            this.rightStick = { x: 0, y: 0, active: false, element: null, touchId: null };
             this.touchStartPos = { x: 0, y: 0 };
             this.stickRadius = 60;
             this.rightStickRadius = this.stickRadius; // Same size as left stick
@@ -2371,24 +2371,47 @@
 
         handleStickTouchStart(e, stick, side) {
             e.preventDefault();
-            const touch = e.touches[0];
-            const rect = stick.element.getBoundingClientRect();
             
-            // Check if touch is within this stick's bounds
-            if (touch.clientX < rect.left || touch.clientX > rect.right || 
-                touch.clientY < rect.top || touch.clientY > rect.bottom) {
-                return; // Touch is outside this stick's area
+            // Skip if this stick is already active
+            if (stick.active) {
+                return;
             }
             
-            // Now we have both left and right sticks
+            const rect = stick.element.getBoundingClientRect();
+            
+            // Find a touch within this stick's bounds that isn't already assigned
+            let selectedTouch = null;
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                
+                // Check if this touch is already assigned to either stick
+                if (this.leftStick.touchId === touch.identifier || 
+                    this.rightStick.touchId === touch.identifier) {
+                    continue;
+                }
+                
+                // Check if touch is within this stick's bounds
+                if (touch.clientX >= rect.left && touch.clientX <= rect.right && 
+                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                    selectedTouch = touch;
+                    break;
+                }
+            }
+            
+            if (!selectedTouch) {
+                return; // No available touch within this stick's area
+            }
+            
+            // Assign this touch to this stick
+            stick.touchId = selectedTouch.identifier;
             
             this.touchStartPos = {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
+                x: selectedTouch.clientX - rect.left,
+                y: selectedTouch.clientY - rect.top
             };
             stick.active = true;
             stick.element.classList.add('active');
-            this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+            this.updateStickPosition(selectedTouch.clientX, selectedTouch.clientY, stick, side);
             
             // Initialize audio if this is the right stick
             if (side === 'right') {
@@ -2398,29 +2421,52 @@
 
         handleStickTouchMove(e, stick, side) {
             e.preventDefault();
-            if (stick.active) {
-                const touch = e.touches[0];
-                const rect = stick.element.getBoundingClientRect();
+            if (stick.active && stick.touchId !== null) {
+                // Find the touch assigned to this stick
+                let assignedTouch = null;
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].identifier === stick.touchId) {
+                        assignedTouch = e.touches[i];
+                        break;
+                    }
+                }
                 
-                // Only update if touch is still within reasonable bounds
-                if (touch.clientX >= rect.left - 50 && touch.clientX <= rect.right + 50 && 
-                    touch.clientY >= rect.top - 50 && touch.clientY <= rect.bottom + 50) {
-                    this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+                if (assignedTouch) {
+                    const rect = stick.element.getBoundingClientRect();
+                    
+                    // Only update if touch is still within reasonable bounds
+                    if (assignedTouch.clientX >= rect.left - 50 && assignedTouch.clientX <= rect.right + 50 && 
+                        assignedTouch.clientY >= rect.top - 50 && assignedTouch.clientY <= rect.bottom + 50) {
+                        this.updateStickPosition(assignedTouch.clientX, assignedTouch.clientY, stick, side);
+                    }
                 }
             }
         }
 
         handleStickTouchEnd(e, stick, side) {
             e.preventDefault();
-            stick.active = false;
-            stick.x = 0;
-            stick.y = 0;
-            stick.element.classList.remove('active');
-            this.updateStickVisual(stick, side);
             
-            // Stop shooting if this is the right stick
-            if (side === 'right') {
-                this.game.inputManager.mouse.down = false;
+            // Check if the ended touch belongs to this stick
+            let touchEnded = false;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === stick.touchId) {
+                    touchEnded = true;
+                    break;
+                }
+            }
+            
+            if (touchEnded) {
+                stick.active = false;
+                stick.x = 0;
+                stick.y = 0;
+                stick.touchId = null; // Clear the touch identifier
+                stick.element.classList.remove('active');
+                this.updateStickVisual(stick, side);
+                
+                // Stop shooting if this is the right stick
+                if (side === 'right') {
+                    this.game.inputManager.mouse.down = false;
+                }
             }
         }
 
@@ -2750,10 +2796,18 @@
                 return;
             }
             
-            // Find the first touch that's not on mobile controls (movement or shooting stick)
+            // Find the first touch that's not assigned to either stick
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 
+                // Skip touches that are assigned to either stick
+                if (this.mobileInput && 
+                    (this.mobileInput.leftStick.touchId === touch.identifier || 
+                     this.mobileInput.rightStick.touchId === touch.identifier)) {
+                    continue;
+                }
+                
+                // Additional position-based check as fallback
                 // Check if touch is within the movement stick area (including extended drag zone)
                 if (this.mobileInput && this.mobileInput.leftStick.element) {
                     const stickRect = this.mobileInput.leftStick.element.getBoundingClientRect();
@@ -2801,10 +2855,18 @@
                 handleTouchMove(e) {
             e.preventDefault();
             
-            // Find the first touch that's not on mobile controls (movement or shooting stick)
+            // Find the first touch that's not assigned to either stick
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 
+                // Skip touches that are assigned to either stick
+                if (this.mobileInput && 
+                    (this.mobileInput.leftStick.touchId === touch.identifier || 
+                     this.mobileInput.rightStick.touchId === touch.identifier)) {
+                    continue;
+                }
+                
+                // Additional position-based check as fallback
                 // Check if touch is within the movement stick area (including extended drag zone)
                 if (this.mobileInput && this.mobileInput.leftStick.element) {
                     const stickRect = this.mobileInput.leftStick.element.getBoundingClientRect();
