@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Zombie Survival - A pixel art action survival game">
     <meta name="author" content="Cavedon">
-    <title>Zombie Survival - Alpha v4.0</title>
+    <title>Zombie Survival - Alpha v5.0</title>
     <style>
         /* =====================================================
            RESET & BASE STYLES
@@ -2008,9 +2008,9 @@
         zombieWorm: {
             width: 20,
             height: 12,
-            speed: 120, // Very fast
-            touchDamage: 5,
-            hitCooldown: 0.3,
+            speed: 100, // Very fast
+            touchDamage: 2,
+            hitCooldown: 0.5,
             maxHP: 5, // Low health
             spriteKey: 'zombieWorm'
         }
@@ -2462,7 +2462,6 @@
             
             this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
             
-            console.log(`${side} stick activated with touch ID: ${touch.identifier}`);
             
             // Initialize audio if this is the right stick
             if (side === 'right') {
@@ -2471,7 +2470,6 @@
         }
 
         deactivateStick(stick, side) {
-            console.log(`${side} stick deactivated, touch ID: ${stick.touchId}`);
             stick.active = false;
             stick.x = 0;
             stick.y = 0;
@@ -2680,22 +2678,6 @@
                 y: 0 // Y component handled separately for jumping
             };
         }
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-        
-
 
         show() {
             this.isActive = true;
@@ -5904,8 +5886,15 @@
                 stuckTimer: 0
             };
 
-            // Add type-specific properties
-            if (type === 'zombieSpitter') {
+            // Add difficulty property based on zombie type
+            if (type === 'zombieTank') {
+                zombie.difficulty = 4; // Hardest - high HP, shield, high damage
+                Object.assign(zombie, {
+                    shieldHP: template.shieldHP,
+                    maxShieldHP: template.maxShieldHP
+                });
+            } else if (type === 'zombieSpitter') {
+                zombie.difficulty = 3; // Hard - ranged attacks, moderate HP
                 Object.assign(zombie, {
                     attackRange: template.attackRange,
                     attackCooldown: template.attackCooldown,
@@ -5913,13 +5902,12 @@
                     projectileSpeed: template.projectileSpeed,
                     projectileDamage: template.projectileDamage
                 });
-            }
-
-            if (type === 'zombieTank') {
-                Object.assign(zombie, {
-                    shieldHP: template.shieldHP,
-                    maxShieldHP: template.maxShieldHP
-                });
+            } else if (type === 'zombieFat') {
+                zombie.difficulty = 2; // Medium - high HP, slow but dangerous
+            } else if (type === 'zombie') {
+                zombie.difficulty = 1; // Easy - basic zombie
+            } else if (type === 'zombieWorm') {
+                zombie.difficulty = 1; // Easy - fast but very weak
             }
 
             console.log(`Zombie object created:`, zombie);
