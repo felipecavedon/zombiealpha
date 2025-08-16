@@ -108,17 +108,17 @@
         }
         
         .analog-stick.left {
-            bottom: 30px;
+            top: 50%;
             left: 30px;
+            transform: translateY(-50%);
         }
 
         .mobile-buttons {
             position: absolute;
             bottom: 170px;
-            right: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
             gap: 10px;
             pointer-events: auto;
         }
@@ -626,9 +626,9 @@
     <div class="mobile-controls" id="mobileControls">
         <div class="analog-stick left" id="leftStick"></div>
         <div class="mobile-buttons">
-            <div class="mobile-button reload" id="reloadButton">RELOAD</div>
-            <div class="mobile-button shop" id="shopButton">SHOP</div>
+            <div class="mobile-button shop" id="shopButton">E</div>
             <div class="mobile-button weapon" id="weaponButton">WEAPON</div>
+            <div class="mobile-button reload" id="reloadButton">RELOAD</div>
         </div>
     </div>
     
@@ -873,6 +873,17 @@
 ],
             right: null
         },
+        zombieWorm: {
+            left: [
+                "..OOOOOOOOOO..",
+                ".OggggggggGO.",
+                "OggggggggggO.",
+                "OggGggggGggO.",
+                "OggggggggggO.",
+                ".OOOOOOOOOO.."
+            ],
+            right: null
+        },
         computer: {
             left: [
   "wwwwwwwwwwww",
@@ -912,7 +923,20 @@
                 "r...r"
             ],
             acid: ["..aa..",".aaaa.","aaaaa.","aaaaa.","..aa.."],
-            shieldBreak: [".w.","w.w",".w."]   
+            shieldBreak: [".w.","w.w",".w."],
+            fatExplosion: [
+                "..r.....r..........r",
+                ".rr..r....rr.....r..",
+                "..rrrr..rrrrrr..rr..",
+                ".rrrrrrrrrrrrrrrrr..",
+                "rrrrrrrrrrrrrrrrrrrr",
+                "rrrrrrrrrrrrrrrrrr..",
+                "rrrrrrrrrrrrrrrrr...",
+                ".rrrrrrrrrrrrrr.....",
+                "..rrrrrrrrrrr.......",
+                "...rrrr..rrr..r.....",
+                ".r..r....r.........."
+            ]
         }
     };
 
@@ -1145,6 +1169,15 @@
             shieldHP: 200,
             maxShieldHP: 200,
             spriteKey: 'zombieTank'
+        },
+        zombieWorm: {
+            width: 20,
+            height: 12,
+            speed: 120, // Very fast
+            touchDamage: 5,
+            hitCooldown: 0.3,
+            maxHP: 15, // Low health
+            spriteKey: 'zombieWorm'
         }
     };
 
@@ -1260,10 +1293,18 @@
         constructor() {
             this.audioContext = null;
             this.soundConfigs = {
-                shot: { duration: 0.08, decay: 40, gain: 0.3 },
-                melee: { duration: 0.12, decay: 25, gain: 0.4 },
-                shotgun: { duration: 0.12, decay: 30, gain: 0.5 },
-                empty: { duration: 0.06, decay: 150, gain: 0.3 }
+                // Weapon-specific sounds with different frequencies
+                pistol: { duration: 0.08, decay: 40, gain: 0.3, frequency: 800 },
+                rifle: { duration: 0.1, decay: 35, gain: 0.4, frequency: 600 },
+                shotgun: { duration: 0.12, decay: 30, gain: 0.5, frequency: 400 },
+                smg: { duration: 0.06, decay: 45, gain: 0.35, frequency: 700 },
+                sniper: { duration: 0.15, decay: 25, gain: 3.0, frequency: 200 },
+                minigun: { duration: 0.05, decay: 50, gain: 0.25, frequency: 650 },
+                melee: { duration: 0.12, decay: 25, gain: 0.4, frequency: 1200 },
+                empty: { duration: 0.06, decay: 150, gain: 0.3, frequency: 1500 },
+                // Satisfying hit sounds for player feedback
+                bodyHit: { duration: 0.08, decay: 30, gain: 0.4, frequency: 600, harmonics: [800, 1200] },
+                headshot: { duration: 0.12, decay: 20, gain: 0.6, frequency: 800, harmonics: [1200, 1600, 2400] }
             };
         }
 
@@ -1284,13 +1325,27 @@
 
             if (type === 'empty') {
                 this.playEmptyClick(config);
+            } else if (type === 'melee') {
+                this.playMeleeSound(config);
+            } else if (type === 'bodyHit' || type === 'headshot') {
+                this.playHitSound(config);
             } else {
-                this.playNoiseSound(config);
+                this.playWeaponSound(config);
             }
         }
 
-        playNoiseSound(config) {
-            const buffer = this.createNoiseBuffer(config.duration, config.decay);
+        playWeaponSound(config) {
+            const buffer = this.createWeaponBuffer(config.duration, config.decay, config.frequency);
+            this.playBuffer(buffer, config.gain);
+        }
+
+        playMeleeSound(config) {
+            const buffer = this.createMeleeBuffer(config.duration, config.decay, config.frequency);
+            this.playBuffer(buffer, config.gain);
+        }
+
+        playHitSound(config) {
+            const buffer = this.createHitBuffer(config.duration, config.decay, config.frequency, config.harmonics);
             this.playBuffer(buffer, config.gain);
         }
 
@@ -1299,7 +1354,7 @@
             this.playBuffer(buffer, config.gain);
         }
 
-        createNoiseBuffer(duration, decay) {
+        createWeaponBuffer(duration, decay, frequency) {
             const sampleRate = this.audioContext.sampleRate;
             const samples = Math.floor(sampleRate * duration);
             const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
@@ -1307,10 +1362,75 @@
 
             for (let i = 0; i < samples; i++) {
                 const t = i / sampleRate;
-                data[i] = (Math.random() * 2 - 1) * Math.exp(-decay * t);
+                const amplitude = Math.exp(-decay * t);
+                
+                // Mix filtered noise with a sine wave component for frequency character
+                const noise = (Math.random() * 2 - 1) * 0.7;
+                const tone = Math.sin(2 * Math.PI * frequency * t) * 0.3;
+                const freqNoise = this.bandpassNoise(noise, frequency, sampleRate);
+                
+                data[i] = (freqNoise + tone) * amplitude;
             }
-
             return buffer;
+        }
+
+        createMeleeBuffer(duration, decay, frequency) {
+            const sampleRate = this.audioContext.sampleRate;
+            const samples = Math.floor(sampleRate * duration);
+            const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < samples; i++) {
+                const t = i / sampleRate;
+                const amplitude = Math.exp(-decay * t);
+                
+                // Sharp attack for melee with high frequency emphasis
+                const attackDecay = Math.exp(-t * 80);
+                const noise = (Math.random() * 2 - 1);
+                const highFreq = Math.sin(2 * Math.PI * frequency * t * (1 + t * 3));
+                
+                data[i] = (noise * 0.6 + highFreq * 0.4) * amplitude * attackDecay;
+            }
+            return buffer;
+        }
+
+        createHitBuffer(duration, decay, frequency, harmonics) {
+            const sampleRate = this.audioContext.sampleRate;
+            const samples = Math.floor(sampleRate * duration);
+            const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < samples; i++) {
+                const t = i / sampleRate;
+                const amplitude = Math.exp(-decay * t);
+                
+                // Create pleasant harmonic tones for satisfying hit feedback
+                let signal = 0;
+                
+                // Main frequency component
+                signal += Math.sin(2 * Math.PI * frequency * t) * 0.5;
+                
+                // Add harmonics for richness and satisfaction
+                if (harmonics) {
+                    harmonics.forEach((harmFreq, index) => {
+                        const harmAmp = 0.3 / (index + 1); // Decreasing amplitude for higher harmonics
+                        signal += Math.sin(2 * Math.PI * harmFreq * t) * harmAmp;
+                    });
+                }
+                
+                // Add a touch of brightness with filtered noise
+                const brightness = (Math.random() * 2 - 1) * 0.1 * Math.exp(-t * 20);
+                
+                data[i] = (signal + brightness) * amplitude;
+            }
+            return buffer;
+        }
+
+        bandpassNoise(noise, centerFreq, sampleRate) {
+            // Simple bandpass filter approximation for frequency-colored noise
+            const normalized = centerFreq / (sampleRate / 2);
+            const factor = Math.max(0.1, Math.min(1.0, normalized));
+            return noise * factor;
         }
 
         createClickBuffer(duration, decay) {
@@ -1944,7 +2064,30 @@
             this.createMuzzleFlash(gunPos, direction, weapon);
             this.consumeAmmo(weapon);
             
-            const soundType = weapon.id === 'shotgun_basic' ? 'shotgun' : 'shot';
+            // Map weapon ID to sound type
+            let soundType;
+            switch(weapon.id) {
+                case 'pistol_basic':
+                    soundType = 'pistol';
+                    break;
+                case 'rifle_mk1':
+                    soundType = 'rifle';
+                    break;
+                case 'shotgun_basic':
+                    soundType = 'shotgun';
+                    break;
+                case 'smg_basic':
+                    soundType = 'smg';
+                    break;
+                case 'sniper_basic':
+                    soundType = 'sniper';
+                    break;
+                case 'minigun_basic':
+                    soundType = 'minigun';
+                    break;
+                default:
+                    soundType = 'pistol'; // fallback
+            }
             this.game.audioManager.playSound(soundType);
         }
 
@@ -2064,6 +2207,9 @@
                 )) {
                     const zombieDied = this.game.damageZombie(zombie, weapon.damage);
                     hitAny = true;
+                    
+                    // Play satisfying hit sound for melee
+                    this.game.audioManager.playSound('bodyHit');
                     
                     if (zombieDied) {
                         zombies.splice(i, 1);
@@ -2574,6 +2720,7 @@
 
             this.renderBackground();
             this.renderGround();
+            this.renderAcidPools(); // Render acid pools behind entities
             this.renderEntities(shake);
             this.renderProjectiles();
             this.renderEffects(shake);
@@ -2772,7 +2919,6 @@
         renderProjectiles() {
             this.renderBullets();
             this.renderAcidProjectiles();
-            this.renderAcidPools();
         }
 
         renderBullets() {
@@ -2911,9 +3057,20 @@
                 
                 const sprite = SPRITES.effects[effect.type];
                 if (sprite && sprite.length > 0) {
-                    const size = effect.type === 'headshot' ? 16 : 8;
-                    const offset = size / 2;
-                    this.drawSprite(sprite, Math.floor(effect.x - offset), Math.floor(effect.y - offset), size, size);
+                    let size, width, height, offsetX, offsetY;
+                    
+                    if (effect.type === 'fatExplosion') {
+                        // Use fat zombie dimensions for fat explosion
+                        width = 50;
+                        height = 44;
+                        offsetX = width / 2;
+                        offsetY = height / 2;
+                        this.drawSprite(sprite, Math.floor(effect.x - offsetX), Math.floor(effect.y - offsetY), width, height);
+                    } else {
+                        size = effect.type === 'headshot' ? 16 : 8;
+                        const offset = size / 2;
+                        this.drawSprite(sprite, Math.floor(effect.x - offset), Math.floor(effect.y - offset), size, size);
+                    }
                 } else {
                     const color = this.getEffectColor(effect.type);
                     this.ctx.fillStyle = color;
@@ -2949,9 +3106,9 @@
             const player = this.game.player;
             const isMobile = MobileDetector.isMobile();
             
-            // Mobile-responsive positioning and sizing - removed padding
+            // Mobile-responsive positioning and sizing - with 5px top padding
             const x = 0;
-            const y = 0;
+            const y = 5;
             const maxWidth = isMobile ? Math.min(CONFIG.HP_BAR_WIDTH, MobileDetector.getWorldWidth() - 60) : CONFIG.HP_BAR_WIDTH;
             const width = Math.max(180, maxWidth); // Minimum width of 180px
             const height = CONFIG.HP_BAR_HEIGHT;
@@ -2994,7 +3151,7 @@
                 colWidth = 200;  // Width of each column
             }
             
-            const tableY = 0;   // No padding, aligned with health bar
+            const tableY = 5;   // 5px padding from top, aligned with health bar
             const rowHeight = 20;  // Height of each row
             const columnSpacing = isMobile ? 8 : 0; // Add spacing between columns on mobile
             
@@ -3390,6 +3547,11 @@
             
             if (hitResult.isHeadshot) {
                 this.game.effectsManager.addScreenShake(8);
+                // Play satisfying headshot sound
+                this.game.audioManager.playSound('headshot');
+            } else {
+                // Play pleasant body hit sound
+                this.game.audioManager.playSound('bodyHit');
             }
         }
 
@@ -3605,7 +3767,14 @@
         updateZombies(dt) {
             this.game.zombies.forEach(zombie => {
                 this.updateZombieAI(zombie, dt);
-                this.keepZombieOnGround(zombie);
+                
+                // Apply gravity and ground collision for worm zombies, keep others on ground
+                if (zombie.spriteKey === 'zombieWorm') {
+                    this.updateWormPhysics(zombie, dt);
+                } else {
+                    this.keepZombieOnGround(zombie);
+                }
+                
                 this.checkZombiePlayerCollision(zombie);
             });
         }
@@ -3722,6 +3891,19 @@
                 velocityY: direction.y * zombie.projectileSpeed,
                 damage: zombie.projectileDamage
             });
+        }
+
+        updateWormPhysics(zombie, dt) {
+            // Apply gravity to worm zombies
+            zombie.velocityY += CONFIG.GRAVITY * dt;
+            zombie.y += zombie.velocityY * dt;
+            
+            // Ground collision
+            const groundY = Utils.getGroundY(MobileDetector.getWorldHeight(), zombie.height);
+            if (zombie.y >= groundY) {
+                zombie.y = groundY;
+                zombie.velocityY = 0;
+            }
         }
 
         keepZombieOnGround(zombie) {
@@ -3887,7 +4069,7 @@
         initializeSprites() {
             // Generate mirrored sprites
             const spritesToFlip = ['player', 'zombie', 'zombieFat', 'zombieSpitter', 
-                                  'zombieTank', 'zombieTankUnshielded', 'computer'];
+                                  'zombieTank', 'zombieTankUnshielded', 'zombieWorm', 'computer'];
             
             spritesToFlip.forEach(spriteName => {
                 if (SPRITES[spriteName] && SPRITES[spriteName].left) {
@@ -4046,16 +4228,18 @@
             // Adjust positioning based on screen size and orientation
             if (MobileDetector.isPortrait()) {
                 // Portrait mode - position controls for tall screen
-                leftStick.style.bottom = '20px';
+                leftStick.style.top = '50%';
                 leftStick.style.left = '20px';
+                leftStick.style.transform = 'translateY(-50%)';
                 mobileButtons.style.bottom = '170px';
-                mobileButtons.style.right = '20px';
+                mobileButtons.style.right = '10px';
             } else {
                 // Landscape mode - position controls for wide screen
-                leftStick.style.bottom = '20px';
+                leftStick.style.top = '50%';
                 leftStick.style.left = '20px';
+                leftStick.style.transform = 'translateY(-50%)';
                 mobileButtons.style.bottom = '120px';
-                mobileButtons.style.right = '20px';
+                mobileButtons.style.right = '10px';
             }
         }
         
@@ -4184,7 +4368,41 @@
             
             // Apply damage to health
             zombie.hp = Math.max(0, zombie.hp - damage);
-            return zombie.hp <= 0;
+            const zombieDied = zombie.hp <= 0;
+            
+            // If fat zombie dies, spawn 4 worm zombies
+            if (zombieDied && zombie.spriteKey === 'zombieFat') {
+                const zombieX = zombie.x + zombie.width / 2;
+                const zombieY = zombie.y;
+                
+                // Create fat explosion effect at fat zombie position
+                this.effectsManager.createHitEffect(zombieX, zombieY, 'fatExplosion');
+                
+                // Spawn 4 worm zombies dropping from above the fat zombie
+                const dropHeight = 60; // Height above the fat zombie to spawn worms
+                const spawnPositions = [
+                    { x: zombieX - 50, y: zombieY - dropHeight },      // Left, above
+                    { x: zombieX + 50, y: zombieY - dropHeight },      // Right, above  
+                    { x: zombieX - 25, y: zombieY - dropHeight - 10 }, // Up-left, higher
+                    { x: zombieX + 25, y: zombieY - dropHeight - 10 }  // Up-right, higher
+                ];
+                
+                for (let i = 0; i < 4; i++) {
+                    const pos = spawnPositions[i];
+                    // Ensure spawn position is within bounds
+                    const clampedX = Math.max(0, Math.min(pos.x, MobileDetector.getWorldWidth() - 20));
+                    
+                    // Create worm zombie manually to control its initial position
+                    const worm = EntityFactory.createZombie(clampedX, 'zombieWorm');
+                    if (worm) {
+                        worm.y = Math.max(0, pos.y); // Start above ground
+                        worm.velocityY = 0; // No initial downward velocity (gravity will take over)
+                        this.zombies.push(worm);
+                    }
+                }
+            }
+            
+            return zombieDied;
         }
 
         triggerGameOver() {
@@ -4259,4 +4477,5 @@
     });
     </script>
 </body>
+</html>
 </html>
