@@ -2284,23 +2284,161 @@
             this.leftStick.element = document.getElementById('leftStick');
             this.rightStick.element = document.getElementById('rightStick');
             
-            // Initialize touch events for analog sticks
+            // Initialize analog sticks for mouse support (touch handled globally)
             this.initAnalogStick(this.leftStick, 'left');
             this.initAnalogStick(this.rightStick, 'right');
+            
+            // Initialize global touch manager for sticks
+            this.initGlobalTouchManager();
             
             // Initialize mobile buttons
             this.initMobileButtons();
         }
 
+        initGlobalTouchManager() {
+            // Use document-level touch events to manage all stick touches
+            document.addEventListener('touchstart', (e) => this.handleGlobalTouchStart(e), { passive: false });
+            document.addEventListener('touchmove', (e) => this.handleGlobalTouchMove(e), { passive: false });
+            document.addEventListener('touchend', (e) => this.handleGlobalTouchEnd(e), { passive: false });
+            document.addEventListener('touchcancel', (e) => this.handleGlobalTouchEnd(e), { passive: false });
+        }
+
+        handleGlobalTouchStart(e) {
+            // Only handle touches that are within stick areas
+            let handledTouch = false;
+            
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (this.assignTouchToStick(touch)) {
+                    handledTouch = true;
+                }
+            }
+            
+            // Prevent default and stop propagation only if we handled a stick touch
+            if (handledTouch) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        handleGlobalTouchMove(e) {
+            // Update sticks based on their assigned touches
+            let handledTouch = false;
+            
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                
+                // Update left stick if this touch belongs to it
+                if (this.leftStick.touchId === touch.identifier && this.leftStick.active) {
+                    this.updateStickPosition(touch.clientX, touch.clientY, this.leftStick, 'left');
+                    handledTouch = true;
+                }
+                
+                // Update right stick if this touch belongs to it
+                if (this.rightStick.touchId === touch.identifier && this.rightStick.active) {
+                    this.updateStickPosition(touch.clientX, touch.clientY, this.rightStick, 'right');
+                    handledTouch = true;
+                }
+            }
+            
+            // Prevent default and stop propagation only if we handled a stick touch
+            if (handledTouch) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        handleGlobalTouchEnd(e) {
+            // Process each ended touch
+            let handledTouch = false;
+            
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                
+                // Deactivate left stick if this touch belongs to it
+                if (this.leftStick.touchId === touch.identifier) {
+                    this.deactivateStick(this.leftStick, 'left');
+                    handledTouch = true;
+                }
+                
+                // Deactivate right stick if this touch belongs to it
+                if (this.rightStick.touchId === touch.identifier) {
+                    this.deactivateStick(this.rightStick, 'right');
+                    handledTouch = true;
+                }
+            }
+            
+            // Prevent default and stop propagation only if we handled a stick touch
+            if (handledTouch) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        assignTouchToStick(touch) {
+            // Check if touch is in left stick area
+            const leftRect = this.leftStick.element.getBoundingClientRect();
+            if (touch.clientX >= leftRect.left && touch.clientX <= leftRect.right &&
+                touch.clientY >= leftRect.top && touch.clientY <= leftRect.bottom &&
+                !this.leftStick.active) {
+                
+                this.activateStick(this.leftStick, 'left', touch);
+                return true;
+            }
+            
+            // Check if touch is in right stick area
+            const rightRect = this.rightStick.element.getBoundingClientRect();
+            if (touch.clientX >= rightRect.left && touch.clientX <= rightRect.right &&
+                touch.clientY >= rightRect.top && touch.clientY <= rightRect.bottom &&
+                !this.rightStick.active) {
+                
+                this.activateStick(this.rightStick, 'right', touch);
+                return true;
+            }
+            
+            return false;
+        }
+
+        activateStick(stick, side, touch) {
+            stick.touchId = touch.identifier;
+            stick.active = true;
+            stick.element.classList.add('active');
+            
+            const rect = stick.element.getBoundingClientRect();
+            this.touchStartPos = {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+            
+            this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+            
+            console.log(`${side} stick activated with touch ID: ${touch.identifier}`);
+            
+            // Initialize audio if this is the right stick
+            if (side === 'right') {
+                this.game.audioManager.init();
+            }
+        }
+
+        deactivateStick(stick, side) {
+            console.log(`${side} stick deactivated, touch ID: ${stick.touchId}`);
+            stick.active = false;
+            stick.x = 0;
+            stick.y = 0;
+            stick.touchId = null;
+            stick.element.classList.remove('active');
+            this.updateStickVisual(stick, side);
+            
+            // Stop shooting if this is the right stick
+            if (side === 'right') {
+                this.game.inputManager.mouse.down = false;
+            }
+        }
+
         initAnalogStick(stick, side) {
             const element = stick.element;
             
-            // Left stick handles movement, right stick handles shooting
-            element.addEventListener('touchstart', (e) => this.handleStickTouchStart(e, stick, side));
-            element.addEventListener('touchmove', (e) => this.handleStickTouchMove(e, stick, side));
-            element.addEventListener('touchend', (e) => this.handleStickTouchEnd(e, stick, side));
-            
-            // Mouse events for testing on desktop
+            // Mouse events for testing on desktop (touch events handled globally)
             element.addEventListener('mousedown', (e) => this.handleStickMouseDown(e, stick, side));
             element.addEventListener('mousemove', (e) => this.handleStickMouseMove(e, stick, side));
             element.addEventListener('mouseup', (e) => this.handleStickMouseUp(e, stick, side));
@@ -2369,106 +2507,7 @@
             }
         }
 
-        handleStickTouchStart(e, stick, side) {
-            e.preventDefault();
-            
-            // Skip if this stick is already active
-            if (stick.active) {
-                return;
-            }
-            
-            const rect = stick.element.getBoundingClientRect();
-            
-            // Find a touch within this stick's bounds that isn't already assigned
-            let selectedTouch = null;
-            for (let i = 0; i < e.touches.length; i++) {
-                const touch = e.touches[i];
-                
-                // Check if this touch is already assigned to either stick
-                if (this.leftStick.touchId === touch.identifier || 
-                    this.rightStick.touchId === touch.identifier) {
-                    continue;
-                }
-                
-                // Check if touch is within this stick's bounds
-                if (touch.clientX >= rect.left && touch.clientX <= rect.right && 
-                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-                    selectedTouch = touch;
-                    break;
-                }
-            }
-            
-            if (!selectedTouch) {
-                return; // No available touch within this stick's area
-            }
-            
-            // Assign this touch to this stick
-            stick.touchId = selectedTouch.identifier;
-            
-            this.touchStartPos = {
-                x: selectedTouch.clientX - rect.left,
-                y: selectedTouch.clientY - rect.top
-            };
-            stick.active = true;
-            stick.element.classList.add('active');
-            this.updateStickPosition(selectedTouch.clientX, selectedTouch.clientY, stick, side);
-            
-            // Initialize audio if this is the right stick
-            if (side === 'right') {
-                this.game.audioManager.init();
-            }
-        }
 
-        handleStickTouchMove(e, stick, side) {
-            e.preventDefault();
-            if (stick.active && stick.touchId !== null) {
-                // Find the touch assigned to this stick
-                let assignedTouch = null;
-                for (let i = 0; i < e.touches.length; i++) {
-                    if (e.touches[i].identifier === stick.touchId) {
-                        assignedTouch = e.touches[i];
-                        break;
-                    }
-                }
-                
-                if (assignedTouch) {
-                    const rect = stick.element.getBoundingClientRect();
-                    
-                    // Only update if touch is still within reasonable bounds
-                    if (assignedTouch.clientX >= rect.left - 50 && assignedTouch.clientX <= rect.right + 50 && 
-                        assignedTouch.clientY >= rect.top - 50 && assignedTouch.clientY <= rect.bottom + 50) {
-                        this.updateStickPosition(assignedTouch.clientX, assignedTouch.clientY, stick, side);
-                    }
-                }
-            }
-        }
-
-        handleStickTouchEnd(e, stick, side) {
-            e.preventDefault();
-            
-            // Check if the ended touch belongs to this stick
-            let touchEnded = false;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === stick.touchId) {
-                    touchEnded = true;
-                    break;
-                }
-            }
-            
-            if (touchEnded) {
-                stick.active = false;
-                stick.x = 0;
-                stick.y = 0;
-                stick.touchId = null; // Clear the touch identifier
-                stick.element.classList.remove('active');
-                this.updateStickVisual(stick, side);
-                
-                // Stop shooting if this is the right stick
-                if (side === 'right') {
-                    this.game.inputManager.mouse.down = false;
-                }
-            }
-        }
 
         handleStickMouseDown(e, stick, side) {
             e.preventDefault();
@@ -5735,6 +5774,25 @@
             document.addEventListener('touchmove', (e) => {
                 if (e.target.closest('.mobile-controls')) {
                     e.preventDefault();
+                }
+            }, { passive: false });
+            
+            // Add better touch event isolation for sticks
+            document.addEventListener('touchstart', (e) => {
+                if (e.target.closest('.analog-stick')) {
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (e.target.closest('.analog-stick')) {
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchend', (e) => {
+                if (e.target.closest('.analog-stick')) {
+                    e.stopPropagation();
                 }
             }, { passive: false });
             
