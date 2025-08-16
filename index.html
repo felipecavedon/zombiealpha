@@ -31,6 +31,41 @@
             user-select: none;
         }
 
+        /* Shop layout improvements */
+        #shopInterface {
+            height: auto !important;
+            min-height: auto !important;
+        }
+
+        #mainMenu, #weaponShop {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #mainMenu .menuContainer {
+            flex: 0 0 auto;
+            justify-content: center;
+            margin: 0;
+        }
+
+        #weaponShop {
+            gap: 15px;
+        }
+
+        #shopContent {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 150px;
+            margin: 0;
+        }
+
+        .shopControls {
+            margin-top: 0;
+        }
+
         /* =====================================================
            GAME CANVAS
            ===================================================== */
@@ -113,25 +148,47 @@
             transform: translateY(-50%);
         }
 
+        /* Shooting analog stick (right side) */
+        .analog-stick.right {
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px solid #ff4444;
+        }
+
+        .analog-stick.right::before {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 68, 68, 0.8);
+        }
+
+        .analog-stick.right.active::before {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
         .mobile-buttons {
             position: absolute;
-            bottom: 170px;
-            right: 10px;
+            top: 50%;
+            right: 30px; /* Same as right stick */
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 10px;
             pointer-events: auto;
+            transform: translate(-0%, -140px); /* Center horizontally by moving left 50% */
+            width: 180px; /* Fixed width to contain all 3 buttons (50px * 3 + 10px * 2 gaps) */
+            justify-content: center; /* Center the buttons within the container */
         }
 
         .mobile-button {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #ffd54a;
             border-radius: 50%;
             color: #fff;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -201,6 +258,95 @@
         /* =====================================================
            SHOP INTERFACE
            ===================================================== */
+        .shop-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .shop-tab {
+            background: #000;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .shop-tab:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .shop-tab.active {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .weapon-unlock-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .weapon-unlock-item {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weapon-info {
+            flex: 1;
+        }
+
+        .weapon-info h3 {
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .weapon-info p {
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .weapon-info .price {
+            color: #ffd700;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .unlock-button {
+            background: #000;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 15px;
+        }
+
+        .unlock-button:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .unlock-button:disabled {
+            background: #222;
+            color: #666;
+            border-color: #666;
+            cursor: not-allowed;
+        }
+
         #shopInterface {
             position: fixed;
             top: 50%;
@@ -214,16 +360,19 @@
             font-family: monospace;
             font-size: 14px;
             z-index: 200;
-            display: none;
-            min-width: 500px;
-            max-width: 90vw;
-            max-height: 90vh;
+            width: 800px;
+            height: auto;
+            min-height: 600px;
             text-align: center;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+            margin: 0;
         }
 
         #shopInterface h2 {
@@ -238,7 +387,9 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            margin: 20px 0;
+            margin: 20px auto;
+            align-items: center;
+            width: 100%;
         }
 
         .menuOption {
@@ -249,6 +400,9 @@
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
         }
 
         .menuOption:hover {
@@ -270,10 +424,42 @@
             color: #00cc00;
         }
 
+        #shopContent {
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        /* Custom scrollbar for shop content */
+        #shopContent::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #shopContent::-webkit-scrollbar-track {
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        #shopContent::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+
+        #shopContent::-webkit-scrollbar-thumb:hover {
+            background: #00cc00;
+        }
+        
+        /* Fallback scrollbar for non-webkit browsers */
+        #shopContent {
+            scrollbar-width: thin;
+            scrollbar-color: #00ff00 rgba(0, 255, 0, 0.1);
+        }
+
         .shopItemsContainer {
             display: table;
             width: 100%;
-            margin: 20px 0;
             border-collapse: collapse;
         }
 
@@ -315,6 +501,95 @@
 
         .shopTableCell:last-child {
             border-bottom-right-radius: 8px;
+        }
+
+        .weapon-item {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .weapon-item:hover {
+            background: rgba(0, 255, 0, 0.2);
+            transform: scale(1.02);
+        }
+
+        .weapon-info {
+            flex: 1;
+        }
+
+        .weapon-info h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .weapon-info p {
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .equip-button {
+            background: #000;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 15px;
+        }
+
+        .equip-button:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .equip-button:disabled {
+            background: #222;
+            color: #666;
+            border-color: #666;
+            cursor: not-allowed;
+        }
+
+        .slotSelectionButtons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-left: 15px;
+        }
+
+        .slotButton {
+            background: #000;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-family: monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .slotButton:hover {
+            background: rgba(0, 255, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .slotButton.equipped {
+            background: #00ff00;
+            color: #000;
+            font-weight: bold;
+            cursor: not-allowed;
         }
 
         .shopItem {
@@ -500,7 +775,13 @@
                 padding: 20px;
                 border-radius: 8px;
                 border-width: 2px;
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                z-index: 9999 !important;
             }
+
             
             #shopInterface h2 {
                 font-size: 20px;
@@ -524,112 +805,387 @@
                 font-size: 13px;
             }
             
+            /* Mobile weapon shop layout - stack vertically instead of table */
+            #shopContent {
+                padding-bottom: 80px !important;
+                margin-bottom: 10px !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
             .shopItemsContainer {
-                flex-direction: column;
-                gap: 8px;
-                margin: 15px 0;
-            }
-            
-            .shopItem {
-                min-width: auto;
-                max-width: none;
-                margin: 5px 0;
-                padding: 20px;
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-            }
-            
-            .shopItemInfo {
-                text-align: center;
-                width: 100%;
-            }
-            
-            .shopItemName {
-                font-size: 16px;
-                margin-bottom: 8px;
-            }
-            
-            .shopItemStats {
-                font-size: 14px;
-            }
-            
-            .shopControls {
-                margin-top: 15px;
-                padding-top: 15px;
-            }
-            
-            .shopButton {
-                padding: 18px 20px;
-                font-size: 18px;
-                margin: 5px;
-                min-height: 60px;
-                min-width: 140px;
-            }
-
-            /* Mobile table layout adjustments */
-            .shopItemsContainer {
-                display: block;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 20px !important;
+                margin: 15px 0 !important;
+                width: 100% !important;
             }
             
             .shopTableRow {
-                display: block;
-                margin-bottom: 20px;
-            }
-            
-            .shopTableHeader,
-            .shopTableCell {
-                display: block;
-                width: 100%;
-                margin-bottom: 10px;
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                margin-bottom: 0 !important;
             }
             
             .shopTableHeader {
-                text-align: center;
-                margin-bottom: 15px;
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 15px !important;
+                text-align: center !important;
+                background: rgba(0, 255, 0, 0.3) !important;
+                padding: 12px !important;
+                border-radius: 6px !important;
+                font-size: 14px !important;
+            }
+            
+            .shopTableCell {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 10px !important;
+                margin-bottom: 20px !important;
+            }
+            
+            /* Weapon items mobile styling */
+            .weapon-item {
+                background: rgba(0, 255, 0, 0.1) !important;
+                border: 2px solid #00ff00 !important;
+                border-radius: 8px !important;
+                padding: 15px !important;
+                margin: 0 !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            
+            .weapon-info h3 {
+                font-size: 16px !important;
+                margin-bottom: 8px !important;
+                color: #00ff00 !important;
+            }
+            
+            .weapon-info p {
+                font-size: 12px !important;
+                color: #ccc !important;
+                margin-bottom: 10px !important;
+            }
+            
+            .slotSelectionButtons {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                margin-top: 10px !important;
+            }
+            
+            .slotButton,
+            .equip-button {
+                background: rgba(0, 255, 0, 0.2) !important;
+                border: 1px solid #00ff00 !important;
+                border-radius: 4px !important;
+                color: #00ff00 !important;
+                padding: 12px !important;
+                font-size: 14px !important;
+                cursor: pointer !important;
+                touch-action: manipulation !important;
+                min-height: 44px !important;
+            }
+            
+            .slotButton:active,
+            .equip-button:active {
+                background: rgba(0, 255, 0, 0.4) !important;
+                transform: scale(0.98) !important;
+            }
+            
+            .slotButton.equipped {
+                background: rgba(0, 255, 0, 0.5) !important;
+                color: #000 !important;
+                font-weight: bold !important;
+            }
+            
+            .shopControls {
+                margin-top: 0 !important;
+                padding: 12px 15px !important;
+                border-top: none !important;
+                position: fixed !important;
+                bottom: 10px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: calc(90vw - 20px) !important;
+                max-width: 400px !important;
+                background: rgba(0, 0, 0, 0.95) !important;
+                z-index: 1000 !important;
+                text-align: center !important;
+                backdrop-filter: blur(5px) !important;
+                -webkit-backdrop-filter: blur(5px) !important;
+                border-radius: 8px !important;
+                border: 2px solid #00ff00 !important;
+                box-shadow: 0 4px 20px rgba(0, 255, 0, 0.3) !important;
+            }
+            
+            .shopButton {
+                padding: 14px 18px !important;
+                font-size: 16px !important;
+                margin: 2px !important;
+                min-height: 50px !important;
+                min-width: 120px !important;
+                background: rgba(0, 255, 0, 0.2) !important;
+                border: 2px solid #00ff00 !important;
+                border-radius: 6px !important;
+                color: #00ff00 !important;
+                font-weight: bold !important;
+                touch-action: manipulation !important;
+                cursor: pointer !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                transition: all 0.2s ease !important;
+            }
+            
+            .shopButton:hover {
+                background: rgba(0, 255, 0, 0.3) !important;
+                border-color: #00ff40 !important;
+                box-shadow: 0 0 12px rgba(0, 255, 0, 0.4) !important;
+            }
+            
+            .shopButton:active {
+                background: rgba(0, 255, 0, 0.4) !important;
+                transform: scale(0.98) !important;
+                border-color: #00ff60 !important;
+            }
+            
+            /* Ensure back button is always visible */
+            #backToMenuButton {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 101 !important;
+            }
+            
+            /* Mobile shop tabs styling */
+            .shop-tabs {
+                display: flex !important;
+                gap: 8px !important;
+                margin-bottom: 15px !important;
+                justify-content: center !important;
+                flex-wrap: wrap !important;
+            }
+            
+            .shop-tab {
+                background: rgba(0, 255, 0, 0.1) !important;
+                color: #00ff00 !important;
+                border: 2px solid #00ff00 !important;
+                border-radius: 6px !important;
+                padding: 12px 16px !important;
+                font-family: monospace !important;
+                font-size: 14px !important;
+                cursor: pointer !important;
+                transition: all 0.2s !important;
+                touch-action: manipulation !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                min-height: 44px !important;
+                flex: 1 !important;
+                max-width: 150px !important;
+            }
+            
+            .shop-tab:active {
+                background: rgba(0, 255, 0, 0.3) !important;
+                transform: scale(0.98) !important;
+            }
+            
+            .shop-tab.active {
+                background: rgba(0, 255, 0, 0.4) !important;
+                color: #000 !important;
+                font-weight: bold !important;
+                border-color: #00ff40 !important;
+                box-shadow: 0 0 8px rgba(0, 255, 0, 0.5) !important;
             }
         }
         
         @media (max-width: 480px) {
+            body #shopInterface,
+            html body #shopInterface,
             #shopInterface {
-                padding: 15px;
-                min-width: 98vw;
-                max-width: 98vw;
+                padding: 15px !important;
+                width: 95vw !important;
+                max-width: 95vw !important;
+                height: auto !important;
+                min-height: 85vh !important;
+                max-height: 95vh !important;
+                overflow: visible !important;
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                z-index: 9999 !important;
+            }
+            
+            #shopContent {
+                max-height: 65vh !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding-right: 10px !important;
+                padding-bottom: 75px !important;
+                margin-bottom: 10px !important;
+            }
+            
+            /* Ensure scrollbar is visible on mobile */
+            #shopContent::-webkit-scrollbar {
+                width: 12px !important;
+            }
+            
+            #shopContent::-webkit-scrollbar-track {
+                background: rgba(0, 255, 0, 0.2) !important;
+                border-radius: 6px !important;
+            }
+            
+            #shopContent::-webkit-scrollbar-thumb {
+                background: #00ff00 !important;
+                border-radius: 6px !important;
             }
             
             #shopInterface h2 {
-                font-size: 18px;
+                font-size: 18px !important;
+                margin-bottom: 10px !important;
+                text-align: center !important;
             }
             
             .menuOption {
-                padding: 12px;
+                padding: 12px !important;
+                max-width: 100% !important;
+                margin: 0 auto 10px auto !important;
             }
             
             .menuOptionName {
-                font-size: 15px;
+                font-size: 15px !important;
             }
             
             .menuOptionDesc {
-                font-size: 12px;
+                font-size: 12px !important;
             }
             
-            .shopItem {
-                padding: 15px;
+            /* Smaller mobile weapon items */
+            .weapon-item {
+                padding: 12px !important;
+                margin: 5px 0 !important;
             }
             
-            .shopItemName {
-                font-size: 15px;
+            .weapon-info h3 {
+                font-size: 14px !important;
+                margin-bottom: 6px !important;
             }
             
-            .shopItemStats {
-                font-size: 13px;
+            .weapon-info p {
+                font-size: 11px !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .slotButton,
+            .equip-button {
+                padding: 10px !important;
+                font-size: 12px !important;
+                min-height: 40px !important;
             }
             
             .shopButton {
-                padding: 16px 18px;
-                font-size: 16px;
-                min-height: 55px;
-                min-width: 130px;
+                padding: 16px 18px !important;
+                font-size: 16px !important;
+                min-height: 55px !important;
+                min-width: 130px !important;
+            }
+            
+            .shopControls {
+                margin-top: 0 !important;
+                padding: 10px 12px !important;
+                border-top: none !important;
+                position: fixed !important;
+                bottom: 8px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: calc(85vw - 16px) !important;
+                max-width: 350px !important;
+                background: rgba(0, 0, 0, 0.95) !important;
+                z-index: 1000 !important;
+                text-align: center !important;
+                backdrop-filter: blur(5px) !important;
+                -webkit-backdrop-filter: blur(5px) !important;
+                border-radius: 6px !important;
+                border: 2px solid #00ff00 !important;
+                box-shadow: 0 3px 15px rgba(0, 255, 0, 0.3) !important;
+            }
+            
+            /* Smaller mobile shop tabs */
+            .shop-tab {
+                padding: 10px 12px !important;
+                font-size: 12px !important;
+                min-height: 40px !important;
+            }
+            
+            /* Ensure close button is visible on very small screens */
+            #closeShopButton,
+            #backToMenuButton {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 101 !important;
+            }
+        }
+        
+        /* Additional mobile override for very small screens */
+        @media (max-height: 500px) {
+            #shopInterface {
+                height: auto !important;
+                min-height: 85vh !important;
+                max-height: 90vh !important;
+                overflow: visible !important;
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                z-index: 9999 !important;
+            }
+            
+            #shopContent {
+                max-height: 45vh !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding-bottom: 60px !important;
+            }
+            
+            .shopControls {
+                bottom: 5px !important;
+                padding: 8px 10px !important;
+            }
+            
+            .shopButton {
+                padding: 10px 14px !important;
+                font-size: 14px !important;
+                min-height: 40px !important;
+                min-width: 100px !important;
+            }
+        }
+        
+        /* Mobile touch improvements */
+        @media (pointer: coarse) {
+            .weapon-item,
+            .menuOption,
+            .shopButton,
+            .shop-tab,
+            .slotButton,
+            .equip-button {
+                -webkit-tap-highlight-color: rgba(0, 255, 0, 0.3) !important;
+                -webkit-touch-callout: none !important;
+                -webkit-user-select: none !important;
+                -khtml-user-select: none !important;
+                -moz-user-select: none !important;
+                -ms-user-select: none !important;
+                user-select: none !important;
+            }
+            
+            /* Prevent zoom on double tap */
+            #shopInterface {
+                touch-action: manipulation !important;
             }
         }
         
@@ -719,10 +1275,11 @@
     <!-- Mobile Controls -->
     <div class="mobile-controls" id="mobileControls">
         <div class="analog-stick left" id="leftStick"></div>
+        <div class="analog-stick right" id="rightStick"></div>
         <div class="mobile-buttons">
+            <div class="mobile-button reload" id="reloadButton">R</div>
+            <div class="mobile-button weapon" id="weaponButton">W</div>
             <div class="mobile-button shop" id="shopButton">E</div>
-            <div class="mobile-button weapon" id="weaponButton">WEAPON</div>
-            <div class="mobile-button reload" id="reloadButton">RELOAD</div>
         </div>
     </div>
     
@@ -749,9 +1306,11 @@
         <!-- Weapon Shop -->
         <div id="weaponShop" style="display: none;">
             <h2>WEAPON SHOP</h2>
-            <div class="shopItemsContainer">
-                <div id="shopItems"></div>
+            <div class="shop-tabs">
+                <button id="weaponBuyTab" class="shop-tab active">Equip</button>
+                <button id="weaponUnlockTab" class="shop-tab">Buy</button>
             </div>
+            <div id="shopContent"></div>
             <div class="shopControls">
                 <button id="backToMenuButton" class="shopButton">BACK</button>
             </div>
@@ -778,6 +1337,7 @@
         // World
         WORLD_WIDTH: 1280,
         WORLD_HEIGHT: 720,
+        PIXEL_SIZE: 1, // Size of each pixel in the sprite
         
         // Mobile World (optimized for mobile screens)
         MOBILE_WORLD_WIDTH: 915,
@@ -797,6 +1357,14 @@
         PLAYER_MAX_HP: 100,
         PLAYER_START_X: 60,
         
+        // Rocket Boots
+        ROCKET_BOOTS_FUEL_MAX: 100,
+        ROCKET_BOOTS_FUEL_DRAIN_RATE: 40, // fuel per second when active
+        ROCKET_BOOTS_FUEL_RECHARGE_RATE: 25, // fuel per second when not active
+        ROCKET_BOOTS_THRUST: 1500, // upward thrust force
+        ROCKET_BOOTS_MAX_UP_SPEED: 400, // maximum upward velocity
+        ROCKET_BOOTS_MAX_DOWN_SPEED: -200, // maximum downward velocity while active
+        
         // Combat
         HEADSHOT_DAMAGE_MULTIPLIER: 2.5,
         HEADSHOT_ZONE_HEIGHT_RATIO: 0.15,
@@ -812,6 +1380,8 @@
         // UI
         HP_BAR_WIDTH: 260,
         HP_BAR_HEIGHT: 16,
+        FUEL_BAR_WIDTH: 260,
+        FUEL_BAR_HEIGHT: 12,
         WEAPON_SLOT_WIDTH: 110,
         WEAPON_SLOT_HEIGHT: 36,
         WEAPON_SLOT_PADDING: 6,
@@ -833,6 +1403,7 @@
         outline: '#1a1c2c',
         white: '#fff',
         black: '#000',
+        gold: '#ffd700',
         
         // Character Colors
         skin: '#ffd37d',
@@ -843,6 +1414,10 @@
         zombieFlesh: '#8b8b8b',
         zombieFleshDark: '#5a5a5a',
         zombieFleshLight: '#b0b0b0',
+        
+        // Coin Colors
+        yellow: '#ffd700',
+        yellowLight: '#ffed4a',
         
         // Environment Colors
         ground: '#27401f',
@@ -872,6 +1447,54 @@
     // ASSET DATA
     // =====================================================
     const SPRITES = {
+        // UI Elements
+        uiCoin: [
+            " yyyYYy ",
+            "yyYYYYyy",
+            "yYYYYYYy",
+            "yYYYYYYy",
+            "yYYYYYYy",
+            "yYYYYYYy",
+            "yyYYYYyy",
+            " yyyYYy "
+        ],
+        // Gold coin sprites (using same design as UI coin)
+        smallCoin: [
+            " yyyYYy ",
+            "yyYYYYyy",
+            "yYYYYYYy",
+            "yYYYYYYy",
+            "yYYYYYYy",
+            "yYYYYYYy",
+            "yyYYYYyy",
+            " yyyYYy "
+        ],
+        mediumCoin: [
+            "  yyyYYy  ",
+            " yyYYYYyy ",
+            "yYYYYYYYYy",
+            "yYYYYYYYYy",
+            "yYYYYYYYYy",
+            "yYYYYYYYYy",
+            "yYYYYYYYYy",
+            "yYYYYYYYYy",
+            " yyYYYYyy ",
+            "  yyyYYy  "
+        ],
+        largeCoin: [
+            "   yyyYYy   ",
+            "  yyYYYYyy  ",
+            " yYYYYYYYYy ",
+            "yYYYYYYYYYYy",
+            "yYYYYYYYYYYy",
+            "yYYYYYYYYYYy",
+            "yYYYYYYYYYYy",
+            "yYYYYYYYYYYy",
+            "yYYYYYYYYYYy",
+            " yYYYYYYYYy ",
+            "  yyYYYYyy  ",
+            "   yyyYYy   "
+        ],
         player: {
             left: [
                 "..OOOOOOOO..",".OssssssOOO.",".OssssssOOOO",
@@ -1003,7 +1626,9 @@
             shotgun: ["bbbbbbbb","b..bbbb."],
             minigun: [".bb.........",".b..........",".bbb.b.b.bb.",".bbbbbbbbbb.",".bbb.b.b.bb."],
             sniperRifle: ["...bbb....","bbbbbbbbbb","bbb......."],
-            smg: ["...b....",".bbbbbb.",".b..b...","....b..."]
+            smg: ["...b....",".bbbbbb.",".b..b...","....b..."],
+            plasmaGun: ["..bbbb..",".bbbbbbbb","bbbbbbbbbb",".bbbbbbbb","..bbbb.."],
+            rocketLauncher: ["...bbbb...","..bbbbbb..",".bbbbbbbb.","bbbbbbbbbb",".bbbbbbbb.","..bbbbbb..","...bbbb..."]
         },
         effects: {
             blood: ["..r.....",".rrr...","..r....."],
@@ -1042,6 +1667,7 @@
         'G': 'zombieFleshDark',
         'r': 'red',
         'y': 'yellow',
+        'Y': 'yellowLight',
         'l': 'bullet',
         'a': 'acid',
         'w': 'white',
@@ -1076,6 +1702,8 @@
             recoilKick: 10,
             knockback: 140,
             flashTime: 0.05,
+            unlocked: false,
+            price: 260,
             effectiveRange: 800,
             accuracy: 0.95,
             sprite: 'assaultRifle',
@@ -1087,6 +1715,8 @@
             name: 'Pistol',
             type: 'side',
             damage: 5,
+            unlocked: true,
+            price: 0,
             fireRate: 4,
             bulletSpeed: 900,
             recoilKick: 6,
@@ -1103,6 +1733,8 @@
             name: 'Combat Knife',
             type: 'side',
             damage: 15,
+            unlocked: true,
+            price: 0,
             range: 32,
             cooldown: 0.38,
             sprite: 'knife',
@@ -1124,13 +1756,15 @@
             sprite: 'shotgun',
             pelletCount: 6,
             spreadAngle: Math.PI * 0.15,
+            unlocked: true,
+            price: 0,
             ammo: { current: 8, max: 8, reserve: Infinity, type: 'shotgun_shells' },
             reloadTime: 3.2
         },
         smg: {
             id: 'smg_basic',
             name: 'SMG',
-            type: 'side',
+            type: 'main',
             damage: 4,
             fireRate: 15,
             bulletSpeed: 950,
@@ -1140,6 +1774,8 @@
             effectiveRange: 350,
             accuracy: 0.75,
             sprite: 'smg',
+            unlocked: false,
+            price: 60,
             ammo: { current: 25, max: 25, reserve: Infinity, type: 'smg_ammo' },
             reloadTime: 1.8
         },
@@ -1148,12 +1784,14 @@
             name: 'Sniper Rifle',
             type: 'main',
             damage: 50,
+            unlocked: false,
+            price: 400,
             fireRate: 1,
             bulletSpeed: 2500,
             recoilKick: 25,
             knockback: 300,
             flashTime: 0.08,
-            effectiveRange: 1200,
+            effectiveRange: 120,
             accuracy: 0.99,
             sprite: 'sniperRifle',
             ammo: { current: 5, max: 5, reserve: Infinity, type: 'sniper_ammo' },
@@ -1172,8 +1810,46 @@
             effectiveRange: 600,
             accuracy: 0.70,
             sprite: 'minigun',
+            unlocked: false,
+            price: 850,
             ammo: { current: 100, max: 100, reserve: Infinity, type: 'minigun_ammo' },
             reloadTime: 4.0
+        },
+        plasmaGun: {
+            id: 'plasma_gun',
+            name: 'Plasma Gun',
+            type: 'main',
+            damage: 25,
+            fireRate: 3,
+            bulletSpeed: 800,
+            recoilKick: 12,
+            knockback: 180,
+            flashTime: 0.06,
+            effectiveRange: 500,
+            accuracy: 0.85,
+            sprite: 'plasmaGun',
+            unlocked: false,
+            price: 1500,
+            ammo: { current: 20, max: 20, reserve: Infinity, type: 'plasma_ammo' },
+            reloadTime: 2.8
+        },
+        rocketLauncher: {
+            id: 'rocket_launcher',
+            name: 'Rocket Launcher',
+            type: 'main',
+            damage: 100,
+            fireRate: 0.8,
+            bulletSpeed: 600,
+            recoilKick: 35,
+            knockback: 400,
+            flashTime: 0.15,
+            effectiveRange: 400,
+            accuracy: 0.90,
+            sprite: 'rocketLauncher',
+            unlocked: false,
+            price: 2300,
+            ammo: { current: 3, max: 3, reserve: Infinity, type: 'rocket_ammo' },
+            reloadTime: 5.0
         }
     };
 
@@ -1285,7 +1961,7 @@
             speed: 120, // Very fast
             touchDamage: 5,
             hitCooldown: 0.3,
-            maxHP: 15, // Low health
+            maxHP: 5, // Low health
             spriteKey: 'zombieWorm'
         }
     };
@@ -1409,11 +2085,17 @@
                 smg: { duration: 0.06, decay: 45, gain: 0.35, frequency: 700 },
                 sniper: { duration: 0.15, decay: 25, gain: 3.0, frequency: 200 },
                 minigun: { duration: 0.05, decay: 50, gain: 0.25, frequency: 650 },
+                plasmaGun: { duration: 0.09, decay: 35, gain: 0.45, frequency: 300 },
+                rocketLauncher: { duration: 0.20, decay: 20, gain: 0.8, frequency: 150 },
                 melee: { duration: 0.12, decay: 25, gain: 0.4, frequency: 1200 },
                 empty: { duration: 0.06, decay: 150, gain: 0.3, frequency: 1500 },
                 // Satisfying hit sounds for player feedback
                 bodyHit: { duration: 0.08, decay: 30, gain: 0.4, frequency: 600, harmonics: [800, 1200] },
-                headshot: { duration: 0.12, decay: 20, gain: 0.6, frequency: 800, harmonics: [1200, 1600, 2400] }
+                headshot: { duration: 0.12, decay: 20, gain: 0.6, frequency: 800, harmonics: [1200, 1600, 2400] },
+                // Rocket boots sound
+                rocketLoop: { duration: 0.2, decay: 15, gain: 0.3, frequency: 150, harmonics: [300, 600] },
+                // Classic coin pickup sound
+                coinPickup: { duration: 0.10, decay: 15, gain: 0.4, frequency: 1200, harmonics: [2400, 3000] }
             };
         }
 
@@ -1436,11 +2118,18 @@
                 this.playEmptyClick(config);
             } else if (type === 'melee') {
                 this.playMeleeSound(config);
-            } else if (type === 'bodyHit' || type === 'headshot') {
+            } else if (type === 'bodyHit' || type === 'headshot' || type === 'coinPickup') {
                 this.playHitSound(config);
+            } else if (type.startsWith('rocket')) {
+                this.playRocketSound(config);
             } else {
                 this.playWeaponSound(config);
             }
+        }
+
+        playRocketSound(config) {
+            const buffer = this.createHitBuffer(config.duration, config.decay, config.frequency, config.harmonics);
+            this.playBuffer(buffer, config.gain);
         }
 
         playWeaponSound(config) {
@@ -1583,16 +2272,21 @@
             this.game = game;
             this.isActive = false;
             this.leftStick = { x: 0, y: 0, active: false, element: null };
+            this.rightStick = { x: 0, y: 0, active: false, element: null };
             this.touchStartPos = { x: 0, y: 0 };
             this.stickRadius = 60;
+            this.rightStickRadius = this.stickRadius; // Same size as left stick
+            this.shootingThreshold = 0.7; // Threshold for activating shooting (70% of max radius)
             this.initMobileControls();
         }
 
         initMobileControls() {
             this.leftStick.element = document.getElementById('leftStick');
+            this.rightStick.element = document.getElementById('rightStick');
             
-            // Initialize touch events for analog stick
+            // Initialize touch events for analog sticks
             this.initAnalogStick(this.leftStick, 'left');
+            this.initAnalogStick(this.rightStick, 'right');
             
             // Initialize mobile buttons
             this.initMobileButtons();
@@ -1601,7 +2295,7 @@
         initAnalogStick(stick, side) {
             const element = stick.element;
             
-            // Left stick handles movement
+            // Left stick handles movement, right stick handles shooting
             element.addEventListener('touchstart', (e) => this.handleStickTouchStart(e, stick, side));
             element.addEventListener('touchmove', (e) => this.handleStickTouchMove(e, stick, side));
             element.addEventListener('touchend', (e) => this.handleStickTouchEnd(e, stick, side));
@@ -1642,23 +2336,37 @@
             // Define the order to cycle through weapons
             const weaponOrder = ['main1', 'main2', 'side'];
             const currentIndex = weaponOrder.indexOf(currentSlot);
-            const nextIndex = (currentIndex + 1) % weaponOrder.length;
-            const nextSlot = weaponOrder[nextIndex];
             
-            // Switch to the next weapon
-            weaponSystem.switchSlot(nextSlot);
+            // Find the next available weapon slot
+            let nextIndex = currentIndex;
+            let nextSlot;
+            let attempts = 0;
             
-            // Update the button label to show more intuitive text
+            do {
+                nextIndex = (nextIndex + 1) % weaponOrder.length;
+                nextSlot = weaponOrder[nextIndex];
+                attempts++;
+                // Break if we've checked all slots to prevent infinite loop
+                if (attempts >= weaponOrder.length) break;
+            } while (!weaponSystem.inventory[nextSlot] && nextSlot !== currentSlot);
+            
+            // Only switch if we found a valid weapon
             const weaponButton = document.getElementById('weaponButton');
-            weaponButton.textContent = 'WEAPON';
             
-            // Add visual feedback
-            weaponButton.style.background = 'rgba(255, 213, 74, 0.3)';
-            setTimeout(() => {
-                weaponButton.style.background = '';
-            }, 200);
-            
-            console.log(`Switched to ${nextSlot} weapon (slot ${nextIndex + 1})`);
+            if (weaponSystem.inventory[nextSlot]) {
+                weaponSystem.switchSlot(nextSlot);
+                
+                // Update the button label to show more intuitive text
+                weaponButton.textContent = 'WEAPON';
+                
+                // Add visual feedback
+                weaponButton.style.background = 'rgba(255, 213, 74, 0.3)';
+                setTimeout(() => {
+                    weaponButton.style.background = '';
+                }, 200);
+                
+                console.log(`Switched to ${nextSlot} weapon (slot ${nextIndex + 1})`);
+            }
         }
 
         handleStickTouchStart(e, stick, side) {
@@ -1672,7 +2380,7 @@
                 return; // Touch is outside this stick's area
             }
             
-            // Only left stick exists now, no conflicts to handle
+            // Now we have both left and right sticks
             
             this.touchStartPos = {
                 x: touch.clientX - rect.left,
@@ -1681,6 +2389,11 @@
             stick.active = true;
             stick.element.classList.add('active');
             this.updateStickPosition(touch.clientX, touch.clientY, stick, side);
+            
+            // Initialize audio if this is the right stick
+            if (side === 'right') {
+                this.game.audioManager.init();
+            }
         }
 
         handleStickTouchMove(e, stick, side) {
@@ -1702,9 +2415,13 @@
             stick.active = false;
             stick.x = 0;
             stick.y = 0;
-            stick.hasJumped = false; // Reset jump flag
             stick.element.classList.remove('active');
-            this.updateStickVisual(stick);
+            this.updateStickVisual(stick, side);
+            
+            // Stop shooting if this is the right stick
+            if (side === 'right') {
+                this.game.inputManager.mouse.down = false;
+            }
         }
 
         handleStickMouseDown(e, stick, side) {
@@ -1717,6 +2434,11 @@
             stick.active = true;
             stick.element.classList.add('active');
             this.updateStickPosition(e.clientX, e.clientY, stick, side);
+            
+            // Initialize audio if this is the right stick
+            if (side === 'right') {
+                this.game.audioManager.init();
+            }
         }
 
         handleStickMouseMove(e, stick, side) {
@@ -1729,9 +2451,13 @@
             stick.active = false;
             stick.x = 0;
             stick.y = 0;
-            stick.hasJumped = false; // Reset jump flag
             stick.element.classList.remove('active');
-            this.updateStickVisual(stick);
+            this.updateStickVisual(stick, side);
+            
+            // Stop shooting if this is the right stick
+            if (side === 'right') {
+                this.game.inputManager.mouse.down = false;
+            }
         }
 
         updateStickPosition(clientX, clientY, stick, side) {
@@ -1743,35 +2469,58 @@
             const deltaY = clientY - centerY;
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             
-            if (distance > this.stickRadius) {
+            // Use different radius for right stick
+            const currentRadius = side === 'right' ? this.rightStickRadius : this.stickRadius;
+            
+            if (distance > currentRadius) {
                 const angle = Math.atan2(deltaY, deltaX);
-                stick.x = Math.cos(angle) * this.stickRadius;
-                stick.y = Math.sin(angle) * this.stickRadius;
+                stick.x = Math.cos(angle) * currentRadius;
+                stick.y = Math.sin(angle) * currentRadius;
             } else {
                 stick.x = deltaX;
                 stick.y = deltaY;
             }
             
             // Apply deadzone
-            if (Math.abs(stick.x) < CONFIG.MOBILE_ANALOG_DEADZONE * this.stickRadius) stick.x = 0;
-            if (Math.abs(stick.y) < CONFIG.MOBILE_ANALOG_DEADZONE * this.stickRadius) stick.y = 0;
+            if (Math.abs(stick.x) < CONFIG.MOBILE_ANALOG_DEADZONE * currentRadius) stick.x = 0;
+            if (Math.abs(stick.y) < CONFIG.MOBILE_ANALOG_DEADZONE * currentRadius) stick.y = 0;
             
-            // Handle jumping when moving stick upward (negative Y)
-            if (side === 'left' && stick.y < -this.stickRadius * 0.5) {
-                // Only jump if we haven't already detected a jump for this stick session
-                if (!stick.hasJumped) {
+            if (side === 'left') {
+                // Handle jumping when moving stick upward (negative Y)
+                if (stick.y < -currentRadius * 0.5) {
+                    // Continuously try to jump while stick is pointing up
                     this.game.inputManager.handleJump();
-                    stick.hasJumped = true;
                 }
-            } else if (stick.y >= -this.stickRadius * 0.3) {
-                // Reset jump flag when stick is not pointing strongly upward
-                stick.hasJumped = false;
+            } else if (side === 'right') {
+                // Handle aiming for the right stick
+                if (stick.x !== 0 || stick.y !== 0) {
+                    // Calculate aim direction and update mouse position for aiming
+                    const aimDistance = Math.sqrt(stick.x * stick.x + stick.y * stick.y);
+                    if (aimDistance > 0) {
+                        // Normalize the aim direction
+                        const normalizedX = stick.x / aimDistance;
+                        const normalizedY = stick.y / aimDistance;
+                        
+                        // Set mouse position relative to player for aiming
+                        const player = this.game.player;
+                        const aimRange = 200; // How far to aim from player
+                        this.game.inputManager.mouse.x = player.x + normalizedX * aimRange;
+                        this.game.inputManager.mouse.y = player.y + normalizedY * aimRange;
+                        
+                        // Only activate shooting when stick is beyond threshold
+                        const distanceRatio = aimDistance / this.rightStickRadius;
+                        this.game.inputManager.mouse.down = distanceRatio >= this.shootingThreshold;
+                    }
+                } else {
+                    // Stop shooting when stick is centered
+                    this.game.inputManager.mouse.down = false;
+                }
             }
             
-            this.updateStickVisual(stick);
+            this.updateStickVisual(stick, side);
         }
 
-        updateStickVisual(stick) {
+        updateStickVisual(stick, side = 'left') {
             const element = stick.element;
             const before = element.querySelector('::before') || element;
             
@@ -1790,8 +2539,9 @@
 
         getLeftStickInput() {
             if (!this.leftStick.active) return { x: 0, y: 0 };
+            // Return -1 for left, 1 for right, 0 for center, regardless of stick distance
             return {
-                x: this.leftStick.x / this.stickRadius,
+                x: this.leftStick.x > 0 ? 1 : (this.leftStick.x < 0 ? -1 : 0),
                 y: 0 // Y component handled separately for jumping
             };
         }
@@ -1837,7 +2587,7 @@
     class InputManager {
         constructor(game) {
             this.game = game;
-            this.keys = { w: false, a: false, d: false };
+            this.keys = { w: false, a: false, d: false, space: false };
             this.mouse = { x: 0, y: 0, down: false };
             this.mobileInput = null;
             this.initEventListeners();
@@ -1861,6 +2611,17 @@
         handleKeyDown(e) {
             const key = e.key.toLowerCase();
             
+            // Handle space bar for rocket boots
+            if (key === ' ') {
+                e.preventDefault();
+                this.keys.space = true;
+                // Initialize audio for rocket boots
+                if (!this.game.gameOver) {
+                    this.game.audioManager.init();
+                }
+                return;
+            }
+            
             if (key in this.keys) {
                 e.preventDefault();
                 this.keys[key] = true;
@@ -1872,8 +2633,7 @@
                 '2': () => this.game.weaponSystem.switchSlot('main2'),
                 '3': () => this.game.weaponSystem.switchSlot('side'),
                 'r': () => this.handleReload(),
-                'e': () => this.game.shopSystem.tryOpenShop(),
-                ' ': () => this.handleRestart()
+                'e': () => this.game.shopSystem.tryOpenShop()
             };
 
             const action = keyActions[key];
@@ -1882,6 +2642,13 @@
 
         handleKeyUp(e) {
             const key = e.key.toLowerCase();
+            
+            if (key === ' ') {
+                e.preventDefault();
+                this.keys.space = false;
+                return;
+            }
+            
             if (key in this.keys) {
                 this.keys[key] = false;
             }
@@ -1957,6 +2724,8 @@
             if (player.onGround && !this.game.gameOver) {
                 player.velocityY = -CONFIG.PLAYER_JUMP_SPEED;
                 player.onGround = false;
+                // Add a small delay before rocket boots can activate
+                player.jumpStartTime = this.game.timeElapsed;
             }
         }
 
@@ -1981,7 +2750,7 @@
                 return;
             }
             
-            // Find the first touch that's not on mobile controls (movement stick)
+            // Find the first touch that's not on mobile controls (movement or shooting stick)
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 
@@ -1992,6 +2761,16 @@
                     if (touch.clientX >= stickRect.left - 50 && touch.clientX <= stickRect.right + 50 &&
                         touch.clientY >= stickRect.top - 50 && touch.clientY <= stickRect.bottom + 50) {
                         continue; // Skip movement stick touches (including extended drag area)
+                    }
+                }
+                
+                // Check if touch is within the shooting stick area (including extended drag zone)
+                if (this.mobileInput && this.mobileInput.rightStick.element) {
+                    const rightStickRect = this.mobileInput.rightStick.element.getBoundingClientRect();
+                    // Include the extended 50px boundary that the stick system uses
+                    if (touch.clientX >= rightStickRect.left - 50 && touch.clientX <= rightStickRect.right + 50 &&
+                        touch.clientY >= rightStickRect.top - 50 && touch.clientY <= rightStickRect.bottom + 50) {
+                        continue; // Skip shooting stick touches (including extended drag area)
                     }
                 }
                 
@@ -2013,15 +2792,16 @@
                 this.mouse.x = Math.max(0, Math.min(MobileDetector.getWorldWidth(), this.mouse.x));
                 this.mouse.y = Math.max(0, Math.min(MobileDetector.getWorldHeight(), this.mouse.y));
                 
-                this.handleMouseDown();
-                break; // Only handle the first valid touch for shooting
+                // DISABLED: No longer trigger shooting on touch - shooting will be handled by analog stick only
+                // this.handleMouseDown();
+                break;
             }
         }
         
-        handleTouchMove(e) {
+                handleTouchMove(e) {
             e.preventDefault();
             
-            // Find the first touch that's not on mobile controls (movement stick)
+            // Find the first touch that's not on mobile controls (movement or shooting stick)
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 
@@ -2035,6 +2815,16 @@
                     }
                 }
                 
+                // Check if touch is within the shooting stick area (including extended drag zone)
+                if (this.mobileInput && this.mobileInput.rightStick.element) {
+                    const rightStickRect = this.mobileInput.rightStick.element.getBoundingClientRect();
+                    // Include the extended 50px boundary that the stick system uses
+                    if (touch.clientX >= rightStickRect.left - 50 && touch.clientX <= rightStickRect.right + 50 &&
+                        touch.clientY >= rightStickRect.top - 50 && touch.clientY <= rightStickRect.bottom + 50) {
+                        continue; // Skip shooting stick touches (including extended drag area)
+                    }
+                }
+
                 const rect = this.game.canvas.getBoundingClientRect();
                 
                 if (MobileDetector.isMobile()) {
@@ -2074,10 +2864,18 @@
 
         initializeInventory() {
             return {
-                main1: this.createWeaponInstance(WEAPONS.rifle),
-                main2: this.createWeaponInstance(WEAPONS.sniper),
-                side: this.createWeaponInstance(WEAPONS.pistol)
+                main1: WEAPONS.shotgun.unlocked ? this.createWeaponInstance(WEAPONS.shotgun) : null,
+                main2: WEAPONS.sniper.unlocked ? this.createWeaponInstance(WEAPONS.sniper) : null,
+                side: WEAPONS.pistol.unlocked ? this.createWeaponInstance(WEAPONS.pistol) : this.createWeaponInstance(WEAPONS.knife)
             };
+        }
+
+        getUnlockedWeapons() {
+            return Object.values(WEAPONS).filter(weapon => weapon.unlocked);
+        }
+
+        getLockedWeapons() {
+            return Object.values(WEAPONS).filter(weapon => !weapon.unlocked && weapon.price > 0);
         }
 
         createWeaponInstance(weaponTemplate) {
@@ -2379,7 +3177,7 @@
 
         checkReloadProgress() {
             Object.values(this.inventory).forEach(weapon => {
-                if (weapon.isReloading && this.game.timeElapsed >= weapon.reloadEndTime) {
+                if (weapon && weapon.isReloading && this.game.timeElapsed >= weapon.reloadEndTime) {
                     this.completeReload(weapon);
                 }
             });
@@ -2394,15 +3192,17 @@
 
         resetWeaponStates() {
             Object.values(this.inventory).forEach(weapon => {
-                weapon.emptyClickPlayed = false;
-                weapon.wasFiring = false;
+                if (weapon) {
+                    weapon.emptyClickPlayed = false;
+                    weapon.wasFiring = false;
+                }
             });
         }
 
         reloadAllWeapons() {
             Object.values(this.inventory).forEach(weapon => {
                 // Only reload weapons that have ammo (not melee weapons like knife)
-                if (weapon.ammo && weapon.ammo.max !== Infinity) {
+                if (weapon && weapon.ammo && weapon.ammo.max !== Infinity) {
                     weapon.ammo.current = weapon.ammo.max;
                     weapon.isReloading = false;
                     weapon.reloadStartTime = null;
@@ -2423,6 +3223,7 @@
             this.selectedShopItem = null;
             this.selectedSlot = null;
             this.merchant = this.createMerchant();
+            this.weaponUnlockTab = false;
             this.initializeUI();
         }
 
@@ -2444,9 +3245,100 @@
             
             // Weapon shop controls
             document.getElementById('backToMenuButton').addEventListener('click', () => this.showMainMenu());
+            document.getElementById('weaponUnlockTab').addEventListener('click', () => this.showWeaponUnlocks());
+            document.getElementById('weaponBuyTab').addEventListener('click', () => this.showWeaponShop());
             
             // Close button
             document.getElementById('closeShopButton').addEventListener('click', () => this.closeShop());
+        }
+
+        showWeaponUnlocks() {
+            this.weaponUnlockTab = true;
+            document.getElementById('weaponUnlockTab').classList.add('active');
+            document.getElementById('weaponBuyTab').classList.remove('active');
+            this.renderWeaponUnlocks();
+        }
+
+        showWeaponShop() {
+            this.weaponUnlockTab = false;
+            document.getElementById('weaponUnlockTab').classList.remove('active');
+            document.getElementById('weaponBuyTab').classList.add('active');
+            this.renderWeaponShop();
+        }
+
+        renderWeaponUnlocks() {
+            const shopContent = document.getElementById('shopContent');
+            shopContent.innerHTML = '';
+
+            // Create weapon unlock list
+            const weaponList = document.createElement('div');
+            weaponList.className = 'weapon-unlock-list';
+
+            // Sort weapons by price (lowest first) for the buy tab
+            const weaponsToSell = Object.values(WEAPONS)
+                .filter(weapon => !weapon.unlocked && weapon.price > 0)
+                .sort((a, b) => (a.price || 0) - (b.price || 0));
+
+            weaponsToSell.forEach(weapon => {
+                    const weaponItem = document.createElement('div');
+                    weaponItem.className = 'weapon-unlock-item';
+                    
+                    // Create stats string
+                    let stats = '';
+                    if (weapon.type === 'main') {
+                        stats = `DMG: ${weapon.damage} | RATE: ${weapon.fireRate}/s | RANGE: ${weapon.effectiveRange}`;
+                    } else {
+                        stats = `DMG: ${weapon.damage} | RATE: ${weapon.fireRate}/s | RANGE: ${weapon.effectiveRange || weapon.range}`;
+                    }
+                    
+                    weaponItem.innerHTML = `
+                        <div class="weapon-info">
+                            <h3>${weapon.name}</h3>
+                            <p>${stats}</p>
+                            <p class="price">Price: ${weapon.price} coins</p>
+                        </div>
+                        <button class="unlock-button" ${this.game.playerGold >= weapon.price ? '' : 'disabled'}>
+                            Buy
+                        </button>
+                    `;
+
+                    const unlockButton = weaponItem.querySelector('.unlock-button');
+                    unlockButton.addEventListener('click', () => this.unlockWeapon(weapon));
+
+                    weaponList.appendChild(weaponItem);
+            });
+
+            shopContent.appendChild(weaponList);
+        }
+
+        unlockWeapon(weapon) {
+            if (this.game.playerGold >= weapon.price) {
+                this.game.playerGold -= weapon.price;
+                weapon.unlocked = true;
+                // Don't reinitialize inventory, just update the unlocked status
+                this.renderWeaponUnlocks();
+                this.game.audioManager.playSound('purchase');
+            }
+        }
+
+        equipWeapon(weapon, slot = null) {
+            if (weapon.type === 'main') {
+                if (slot) {
+                    // Equip to specific slot and unequip from other slot if it's the same weapon
+                    const otherSlot = slot === 'main1' ? 'main2' : 'main1';
+                    if (this.game.weaponSystem.inventory[otherSlot]?.id === weapon.id) {
+                        this.game.weaponSystem.inventory[otherSlot] = null;
+                    }
+                    this.game.weaponSystem.inventory[slot] = this.game.weaponSystem.createWeaponInstance(weapon);
+                } else {
+                    // Auto-assign to first available slot or current slot
+                    const currentSlot = this.game.weaponSystem.currentSlot;
+                    this.game.weaponSystem.inventory[currentSlot] = this.game.weaponSystem.createWeaponInstance(weapon);
+                }
+            } else {
+                this.game.weaponSystem.inventory.side = this.game.weaponSystem.createWeaponInstance(weapon);
+            }
+            this.game.audioManager.playSound('equip');
         }
 
         update() {
@@ -2480,7 +3372,7 @@
         openShop() {
             this.shopOpen = true;
             this.showMainMenu();
-            document.getElementById('shopInterface').style.display = 'block';
+            document.getElementById('shopInterface').style.display = 'flex';
         }
 
         showMainMenu() {
@@ -2499,7 +3391,7 @@
         openWeaponShop() {
             document.getElementById('mainMenu').style.display = 'none';
             document.getElementById('weaponShop').style.display = 'block';
-            this.updateShopInterface();
+            this.showWeaponShop();
         }
 
         startWaveOption() {
@@ -2514,13 +3406,14 @@
             document.getElementById('shopInterface').style.display = 'none';
         }
 
-        updateShopInterface() {
-            const container = document.getElementById('shopItems');
-            container.innerHTML = '';
+        renderWeaponShop() {
+            const shopContent = document.getElementById('shopContent');
+            if (!shopContent) return;
             
-            // Create table structure
-            const table = document.createElement('div');
-            table.className = 'shopItemsContainer';
+            shopContent.innerHTML = '';
+            
+            const container = document.createElement('div');
+            container.className = 'shopItemsContainer';
             
             // Row 1: Headers
             const headerRow = document.createElement('div');
@@ -2528,15 +3421,15 @@
             
             const mainHeader = document.createElement('div');
             mainHeader.className = 'shopTableHeader';
-            mainHeader.textContent = 'Main';
+            mainHeader.textContent = 'MAIN WEAPONS';
             
             const sideHeader = document.createElement('div');
             sideHeader.className = 'shopTableHeader';
-            sideHeader.textContent = 'Side';
+            sideHeader.textContent = 'SIDE WEAPONS';
             
             headerRow.appendChild(mainHeader);
             headerRow.appendChild(sideHeader);
-            table.appendChild(headerRow);
+            container.appendChild(headerRow);
             
             // Row 2: Weapons
             const weaponsRow = document.createElement('div');
@@ -2548,111 +3441,94 @@
             const sideCell = document.createElement('div');
             sideCell.className = 'shopTableCell';
             
-            // Add main weapons to main cell
-            Object.values(SHOP_ITEMS).forEach(item => {
-                if (item.type === 'main') {
-                    mainCell.appendChild(this.createShopItemElement(item));
-                }
-            });
-            
-            // Add side weapons to side cell
-            Object.values(SHOP_ITEMS).forEach(item => {
-                if (item.type === 'side') {
-                    sideCell.appendChild(this.createShopItemElement(item));
+            // Add weapons to their respective cells
+            Object.values(WEAPONS).forEach(weapon => {
+                if (weapon.unlocked) {
+                const weaponItem = document.createElement('div');
+                weaponItem.className = 'weapon-item';
+                
+                    let isEquipped = false;
+                    let slotButtonsHtml = '';
+                    
+                    // Create stats string
+                    let stats = '';
+                    if (weapon.type === 'main') {
+                        stats = `DMG: ${weapon.damage} | RATE: ${weapon.fireRate}/s | RANGE: ${weapon.effectiveRange}`;
+                    } else {
+                        stats = `DMG: ${weapon.damage} | RATE: ${weapon.fireRate}/s | RANGE: ${weapon.effectiveRange || weapon.range}`;
+                    }
+                    
+                    if (weapon.type === 'main') {
+                        const main1Equipped = this.game.weaponSystem.inventory.main1?.id === weapon.id;
+                        const main2Equipped = this.game.weaponSystem.inventory.main2?.id === weapon.id;
+                        isEquipped = main1Equipped || main2Equipped;
+                        
+                        slotButtonsHtml = `
+                            <div class="slotSelectionButtons">
+                                <button class="slotButton ${main1Equipped ? 'equipped' : ''}" data-slot="main1">
+                                    SLOT 1
+                                </button>
+                                <button class="slotButton ${main2Equipped ? 'equipped' : ''}" data-slot="main2">
+                                    SLOT 2
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        isEquipped = this.game.weaponSystem.inventory.side?.id === weapon.id;
+                    }
+                    
+                    weaponItem.innerHTML = `
+                        <div class="weapon-info">
+                            <h3>${weapon.name}</h3>
+                            <p>${stats}</p>
+                        </div>
+                        ${slotButtonsHtml || `
+                            <div class="slotSelectionButtons">
+                                <button class="slotButton ${isEquipped ? 'equipped' : ''}" ${isEquipped ? 'disabled' : ''}>
+                                    ${isEquipped ? 'EQUIPPED' : 'EQUIP'}
+                                </button>
+                            </div>
+                        `}
+                    `;
+
+                    if (!isEquipped) {
+                        if (weapon.type === 'main') {
+                            // For main weapons, add click handlers to slot buttons
+                            weaponItem.querySelectorAll('.slotButton').forEach(button => {
+                                if (!button.classList.contains('equipped')) {
+                                    button.addEventListener('click', () => {
+                                        const slot = button.getAttribute('data-slot');
+                                        this.equipWeapon(weapon, slot);
+                                        this.renderWeaponShop();
+                                    });
+                                }
+                            });
+                        } else {
+                            // For side weapons, equip directly
+                            const equipButton = weaponItem.querySelector('.slotButton');
+                            equipButton.addEventListener('click', () => {
+                                this.equipWeapon(weapon);
+                                this.renderWeaponShop();
+                            });
+                        }
+                    }
+
+                    if (weapon.type === 'main') {
+                        mainCell.appendChild(weaponItem);
+                    } else {
+                        sideCell.appendChild(weaponItem);
+                    }
                 }
             });
             
             weaponsRow.appendChild(mainCell);
             weaponsRow.appendChild(sideCell);
-            table.appendChild(weaponsRow);
-            
-            container.appendChild(table);
+            container.appendChild(weaponsRow);
+                    
+            shopContent.appendChild(container);
         }
 
-        createShopItemElement(item) {
-            const element = document.createElement('div');
-            element.className = 'shopItem';
-            element.dataset.itemId = item.id;
-            
-            const weaponType = item.weapon.type;
-            const isMainWeapon = weaponType === 'main';
-            
-            let slotButtonsHtml = '';
-            let isAnySlotEquipped = false;
-            
-            if (isMainWeapon) {
-                // For main weapons, show slot selection buttons
-                const main1Equipped = this.game.weaponSystem.inventory.main1?.id === item.id;
-                const main2Equipped = this.game.weaponSystem.inventory.main2?.id === item.id;
-                isAnySlotEquipped = main1Equipped || main2Equipped;
-                
-                slotButtonsHtml = `
-                    <div class="slotSelectionButtons">
-                        <button class="slotButton ${main1Equipped ? 'equipped' : ''}" data-slot="main1">
-                            SLOT 1 ${main1Equipped ? '(EQUIPPED)' : ''}
-                        </button>
-                        <button class="slotButton ${main2Equipped ? 'equipped' : ''}" data-slot="main2">
-                            SLOT 2 ${main2Equipped ? '(EQUIPPED)' : ''}
-                        </button>
-                    </div>
-                `;
-            } else {
-                // For side weapons, check if equipped normally
-                isAnySlotEquipped = this.game.weaponSystem.inventory[weaponType]?.id === item.id;
-            }
-            
-            element.innerHTML = `
-                <div class="shopItemInfo">
-                    <div class="shopItemName">${item.name}${isAnySlotEquipped ? ' (EQUIPPED)' : ''}</div>
-                    <div class="shopItemStats">${item.stats}</div>
-                    ${slotButtonsHtml}
-                </div>
-            `;
-            
-            if (isAnySlotEquipped) {
-                element.setAttribute('disabled', 'true');
-            } else if (isMainWeapon) {
-                // For main weapons, add click handlers to slot buttons
-                element.querySelectorAll('.slotButton').forEach(button => {
-                    if (!button.classList.contains('equipped')) {
-                        button.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const targetSlot = button.getAttribute('data-slot');
-                            this.selectShopItemWithSlot(item, targetSlot);
-                        });
-                    }
-                });
-            } else {
-                // For side weapons, use old behavior
-                element.addEventListener('click', () => this.selectShopItem(item));
-            }
-            
-            return element;
-        }
 
-        selectShopItem(item) {
-            // Automatically swap the side weapon
-            const weapon = item.weapon;
-            const targetSlot = item.weapon.type; // Default to weapon's natural slot
-            
-            this.game.weaponSystem.inventory[targetSlot] = 
-                this.game.weaponSystem.createWeaponInstance(weapon);
-            this.game.weaponSystem.currentSlot = targetSlot;
-            
-            // Refresh the shop display to show updated equipped status
-            this.updateShopInterface();
-        }
-
-        selectShopItemWithSlot(item, targetSlot) {
-            // Automatically swap the weapon
-            const weapon = item.weapon;
-            this.game.weaponSystem.inventory[targetSlot] = 
-                this.game.weaponSystem.createWeaponInstance(weapon);
-            this.game.weaponSystem.currentSlot = targetSlot;
-            
-            // Refresh the shop display to show updated equipped status
-            this.updateShopInterface();
-        }
 
 
 
@@ -3039,6 +3915,11 @@
         }
 
         renderEntities(shake) {
+            // Render coins behind other entities
+            for (const coin of this.game.coins) {
+                coin.draw(this.ctx, this);
+            }
+            
             this.renderMerchant();
             this.renderPlayer(shake);
             this.renderWeapon(shake);
@@ -3056,8 +3937,39 @@
                 player.height
             );
             
+            // Render rocket boots effects
+            if (player.rocketBootsActive) {
+                this.renderRocketBootsEffect(player, shake);
+            }
+            
             // Render reload bar above player head
             this.renderPlayerReloadBar(player, shake);
+        }
+
+        renderRocketBootsEffect(player, shake) {
+            const time = Date.now() * 0.01;
+            
+            // Create animated flame/exhaust effect below player's feet
+            const exhaustX = Math.floor(player.x + player.width / 2 + shake.x);
+            const exhaustY = Math.floor(player.y + player.height + shake.y);
+            
+            // Draw multiple flame particles for effect
+            for (let i = 0; i < 6; i++) {
+                const offsetX = (Math.sin(time + i * 0.8) * 4) + (Math.random() - 0.5) * 6;
+                const offsetY = i * 3 + Math.sin(time + i) * 2;
+                
+                // Flame colors - from blue at base to purple/red at tips
+                const colors = ['#2196f3', '#9c27b0', '#e91e63', '#ff5722'];
+                const color = colors[Math.min(i, colors.length - 1)];
+                
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(
+                    exhaustX + offsetX - 1, 
+                    exhaustY + offsetY - 1, 
+                    3, 
+                    4
+                );
+            }
         }
 
         renderPlayerReloadBar(player, shake) {
@@ -3330,8 +4242,10 @@
 
         renderUI() {
             this.renderPlayerHealthBar();
+            this.renderRocketBootsFuelBar();
             this.renderWeaponSlots();
             this.renderMerchantHint();
+            this.renderPlayerGold();
             
             if (CONFIG.DEBUG_MODE) {
                 this.renderDebugInfo();
@@ -3358,6 +4272,86 @@
             this.ctx.strokeRect(x, y, width, height);
 
             // Health bar only - no text
+        }
+
+        renderRocketBootsFuelBar() {
+            const player = this.game.player;
+            const isMobile = MobileDetector.isMobile();
+            
+            // Position below health bar with 3px spacing
+            const x = 0;
+            const y = 5 + CONFIG.HP_BAR_HEIGHT + 3;
+            const maxWidth = isMobile ? Math.min(CONFIG.FUEL_BAR_WIDTH, MobileDetector.getWorldWidth() - 60) : CONFIG.FUEL_BAR_WIDTH;
+            const width = Math.max(180, maxWidth); // Minimum width of 180px to match health bar
+            const height = CONFIG.FUEL_BAR_HEIGHT;
+
+            // Draw background with border
+            this.ctx.fillStyle = '#111';
+            this.ctx.fillRect(x - 2, y - 2, width + 4, height + 4);
+
+            // Draw fuel bar (similar to health bar)
+            this.drawFuelBar(x, y, width, height, player.rocketBootsFuel, CONFIG.ROCKET_BOOTS_FUEL_MAX);
+
+            // Draw border
+            this.ctx.strokeStyle = PALETTE.outline;
+            this.ctx.strokeRect(x - 2, y - 2, width + 4, height + 4);
+        }
+
+        renderPlayerGold() {
+            const isMobile = MobileDetector.isMobile();
+            const padding = isMobile ? 10 : 20;
+            const fontSize = isMobile ? 14 : 16;
+            const y = padding + 5; // Position at top
+            const goldStr = this.game.playerGold.toString();
+            
+            // Calculate sizes
+            const textWidth = goldStr.length * fontSize * 0.6; // Approximate text width
+            const coinSize = Math.max(fontSize * 1.2, textWidth * 0.3); // Scale coin with text, but not too small
+            const spacing = fontSize * 0.75; // Dynamic spacing based on font size
+            
+            // Calculate positions from right edge
+            const rightEdge = MobileDetector.getWorldWidth() - padding;
+            const textX = rightEdge;
+            const coinX = rightEdge - textWidth - spacing - coinSize;
+            const coinY = y - (coinSize * 0.75); // Vertically center with text
+            
+            // Draw coin sprite
+            this.drawSprite(SPRITES.uiCoin, Math.floor(coinX), Math.floor(coinY), Math.floor(coinSize), Math.floor(coinSize));
+            
+            // Draw gold amount
+            this.ctx.font = `${fontSize}px 'Press Start 2P'`;
+            this.ctx.fillStyle = PALETTE.yellowLight; // Use the brighter gold for text
+            this.ctx.textAlign = 'right';
+            this.ctx.fillText(goldStr, textX, y);
+        }
+        drawFuelBar(x, y, width, height, fuel, maxFuel) {
+            const fuelRatio = Math.max(0, fuel / maxFuel);
+            
+            // Background
+            this.ctx.fillStyle = '#333';
+            this.ctx.fillRect(x, y, width, height);
+            
+            // Fuel bar - gradient from purple to blue
+            if (fuelRatio > 0) {
+                const gradient = this.ctx.createLinearGradient(x, y, x + width * fuelRatio, y);
+                
+                if (fuelRatio > 0.5) {
+                    // High fuel: purple to blue
+                    gradient.addColorStop(0, '#9c27b0');
+                    gradient.addColorStop(1, '#2196f3');
+                } else if (fuelRatio > 0.25) {
+                    // Medium fuel: darker purple
+                    gradient.addColorStop(0, '#673ab7');
+                    gradient.addColorStop(1, '#9c27b0');
+                } else {
+                    // Low fuel: red warning
+                    gradient.addColorStop(0, '#f44336');
+                    gradient.addColorStop(1, '#e91e63');
+                }
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(x, y, width * fuelRatio, height);
+            }
         }
 
         renderWeaponSlots() {
@@ -3487,7 +4481,7 @@
                     this.ctx.fillStyle = '#ffd54a'; // Yellow for selected weapon
                     this.ctx.font = 'bold 18px "Courier New", monospace'; // Slightly larger font
                 } else {
-                    this.ctx.fillStyle = '#9cf'; // Blue for unselected weapons
+                    this.ctx.fillStyle = '#888'; // Same color as empty slots for unselected weapons
                     this.ctx.font = 'bold 16px "Courier New", monospace';
                 }
                 
@@ -3517,7 +4511,8 @@
             const weapon = weaponSystem.inventory[slot];
             if (weapon && weapon.id !== 'knife_mk1' && !weapon.range && weapon.ammo) {
                 // Always show ammo count, reload bar now appears above player
-                this.ctx.fillStyle = weapon.isReloading ? '#888' : '#ffd54a';
+                const isSelected = slot === weaponSystem.currentSlot;
+                this.ctx.fillStyle = weapon.isReloading ? '#888' : (isSelected ? '#ffd54a' : '#888');
                 this.ctx.font = 'bold 16px "Courier New", monospace';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.textAlign = 'center';
@@ -3793,16 +4788,15 @@
                 moveDir = (input.keys.a ? -1 : 0) + (input.keys.d ? 1 : 0);
             }
             
-            // Apply movement
-            player.velocityX += (moveDir * CONFIG.PLAYER_MOVE_SPEED - player.velocityX) * 0.4;
+            // Apply movement with constant speed
+            player.velocityX = moveDir * CONFIG.PLAYER_MOVE_SPEED;
             player.x += player.velocityX * dt;
             player.x = Utils.clamp(player.x, 0, MobileDetector.getWorldWidth() - player.width);
 
-            // Vertical movement (gravity)
-            player.velocityY += CONFIG.GRAVITY * dt;
+            // Update vertical position first
             player.y += player.velocityY * dt;
 
-            // Ground collision
+            // Check ground collision and update player state
             const groundY = Utils.getGroundY(MobileDetector.getWorldHeight(), player.height);
             if (player.y > groundY) {
                 player.y = groundY;
@@ -3811,7 +4805,64 @@
             } else {
                 player.onGround = false;
             }
-
+            
+            // Rocket boots mechanics - only activate if space is pressed
+            const wantsToUseBoots = input.keys.space && !this.game.gameOver;
+            const hasFuel = player.rocketBootsFuel > 0;
+            
+            // Only allow activation if we have fuel and weren't already out of fuel
+            if (wantsToUseBoots && hasFuel && !player.outOfFuel) {
+                if (!player.rocketBootsActive) {
+                    // Just activated
+                    player.rocketBootsActive = true;
+                }
+                
+                // Play loop sound while active
+                if (!player.rocketSoundTimer || player.rocketSoundTimer <= 0) {
+                    this.game.audioManager.playSound('rocketLoop');
+                    player.rocketSoundTimer = 0.2; // Match the sound duration
+                }
+                player.rocketSoundTimer = Math.max(0, player.rocketSoundTimer - dt);
+            } else {
+                // Deactivate if key released or out of fuel
+                if (player.rocketBootsActive && !hasFuel) {
+                    // Ran out of fuel
+                    player.outOfFuel = true;
+                }
+                player.rocketBootsActive = false;
+                player.rocketSoundTimer = 0;
+            }
+            
+            // Reset out of fuel flag when fuel is recharged
+            if (player.outOfFuel && !wantsToUseBoots && hasFuel) {
+                player.outOfFuel = false;
+            }
+            
+            // Apply physics based on state
+            if (player.rocketBootsActive) {
+                // Apply thrust with speed limit
+                player.velocityY -= CONFIG.ROCKET_BOOTS_THRUST * dt;
+                
+                // Limit vertical speed
+                player.velocityY = Math.max(
+                    Math.min(player.velocityY, -CONFIG.ROCKET_BOOTS_MAX_DOWN_SPEED), // Negative because Y is inverted
+                    -CONFIG.ROCKET_BOOTS_MAX_UP_SPEED
+                );
+                
+                // Consume fuel
+                player.rocketBootsFuel -= CONFIG.ROCKET_BOOTS_FUEL_DRAIN_RATE * dt;
+                player.rocketBootsFuel = Math.max(0, player.rocketBootsFuel);
+            } else {
+                // Apply normal gravity when not using rocket boots
+                player.velocityY += CONFIG.GRAVITY * dt;
+                
+                // Recharge fuel when not using rocket boots
+                if (player.rocketBootsFuel < CONFIG.ROCKET_BOOTS_FUEL_MAX) {
+                    player.rocketBootsFuel += CONFIG.ROCKET_BOOTS_FUEL_RECHARGE_RATE * dt;
+                    player.rocketBootsFuel = Math.min(CONFIG.ROCKET_BOOTS_FUEL_MAX, player.rocketBootsFuel);
+                }
+            }
+            
             // Ceiling collision
             if (player.y < 0) {
                 player.y = 0;
@@ -3875,10 +4926,6 @@
                         bullet.damage;
                     
                     const zombieDied = this.game.damageZombie(zombie, damage);
-
-                    if (zombieDied) {
-                        zombies.splice(j, 1);
-                    }
                     
                     return { 
                         hit: true, 
@@ -4263,7 +5310,13 @@
                 hp: CONFIG.PLAYER_MAX_HP,
                 maxHP: CONFIG.PLAYER_MAX_HP,
                 onGround: true,
-                facingRight: true
+                facingRight: true,
+                // Rocket Boots
+                rocketBootsFuel: CONFIG.ROCKET_BOOTS_FUEL_MAX,
+                rocketBootsActive: false,
+                rocketSoundTimer: 0,
+                outOfFuel: false,
+                jumpStartTime: 0
             };
         }
 
@@ -4284,8 +5337,8 @@
                 height: template.height,
                 velocityX: 0,
                 velocityY: 0,
-                hp: template.maxHP,
-                maxHP: template.maxHP,
+                health: template.maxHP,
+                maxHealth: template.maxHP,
                 speed: template.speed,
                 touchDamage: template.touchDamage,
                 hitCooldown: template.hitCooldown,
@@ -4316,6 +5369,69 @@
 
             console.log(`Zombie object created:`, zombie);
             return zombie;
+        }
+    }
+
+    // =====================================================
+    // COIN CLASS
+    // =====================================================
+    class Coin {
+        constructor(x, y, size) {
+            this.x = x;
+            this.y = y;
+            this.size = size; // 'small', 'medium', or 'large'
+            this.value = this.getValueBySize();
+            this.sprite = this.getSpriteBySize();
+            this.width = this.sprite[0].length * CONFIG.PIXEL_SIZE;
+            this.height = this.sprite.length * CONFIG.PIXEL_SIZE;
+            this.collected = false;
+            this.animationFrame = 0;
+            this.bobHeight = 0;
+            this.bobDirection = 1;
+            this.bobSpeed = 0.02;  // Much slower speed
+            this.bobRange = 1.5;   // Smaller range of motion
+        }
+
+        getValueBySize() {
+            switch(this.size) {
+                case 'small': return 1;
+                case 'medium': return 5;
+                case 'large': return 10;
+                default: return 1;
+            }
+        }
+
+        getSpriteBySize() {
+            switch(this.size) {
+                case 'small': return SPRITES.smallCoin;
+                case 'medium': return SPRITES.mediumCoin;
+                case 'large': return SPRITES.largeCoin;
+                default: return SPRITES.smallCoin;
+            }
+        }
+
+        update() {
+            if (this.collected) return;
+            
+            // Smooth bobbing animation using sine wave
+            this.animationFrame = (this.animationFrame + this.bobSpeed) % (Math.PI * 2);
+            this.bobHeight = Math.sin(this.animationFrame) * this.bobRange;
+        }
+
+        draw(ctx, renderer) {
+            if (this.collected) return;
+
+            const drawY = this.y + this.bobHeight;
+            renderer.drawSprite(this.sprite, Math.floor(this.x), Math.floor(drawY), this.width, this.height);
+        }
+
+        checkCollision(player) {
+            if (this.collected) return false;
+
+            return Utils.checkCollision(
+                this.x, this.y + this.bobHeight, this.width, this.height,
+                player.x, player.y, player.width, player.height
+            );
         }
     }
 
@@ -4369,6 +5485,8 @@
             this.canRestart = false;
             this.bullets = [];
             this.zombies = [];
+            this.coins = [];
+            this.playerGold = 0; // Unlimited gold
             this.acidProjectiles = [];
             this.acidPools = [];
         }
@@ -4674,8 +5792,8 @@
             }
             
             // Apply damage to health
-            zombie.hp = Math.max(0, zombie.hp - damage);
-            const zombieDied = zombie.hp <= 0;
+            zombie.health = Math.max(0, zombie.health - damage);
+            const zombieDied = zombie.health <= 0;
             
             // If fat zombie dies, spawn 4 worm zombies
             if (zombieDied && zombie.spriteKey === 'zombieFat') {
@@ -4730,6 +5848,8 @@
             // Ensure all zombies are cleared and game is in peaceful mode
             this.zombies = [];
             this.bullets = [];
+            this.coins = [];
+            this.playerGold = 999999; // Unlimited gold
             this.acidProjectiles = [];
             this.acidPools = [];
             
@@ -4745,6 +5865,55 @@
             this.physics.update(deltaTime);
             this.shopSystem.update();
             this.weaponSystem.update();
+            
+            // Update coins
+            for (let i = this.coins.length - 1; i >= 0; i--) {
+                const coin = this.coins[i];
+                coin.update();
+                
+                if (coin.checkCollision(this.player)) {
+                    this.playerGold += coin.value;
+                    coin.collected = true;
+                    this.coins.splice(i, 1);
+                    this.audioManager.playSound('coinPickup');
+                }
+            }
+            
+            // Check for dead zombies and spawn coins
+            for (let i = this.zombies.length - 1; i >= 0; i--) {
+                const zombie = this.zombies[i];
+                if (zombie.health <= 0) {
+                    // Determine coin drop based on zombie difficulty
+                    const dropChance = 1.0; // 100% chance to drop a coin (for testing)
+                    if (Math.random() < dropChance) {
+                        let coinSize;
+                        const roll = Math.random();
+                        
+                        if (zombie.difficulty >= 3) {
+                            // High difficulty zombies
+                            if (roll < 0.1) coinSize = 'large';
+                            else if (roll < 0.4) coinSize = 'medium';
+                            else coinSize = 'small';
+                        } else if (zombie.difficulty >= 2) {
+                            // Medium difficulty zombies
+                            if (roll < 0.05) coinSize = 'large';
+                            else if (roll < 0.25) coinSize = 'medium';
+                            else coinSize = 'small';
+                        } else {
+                            // Low difficulty zombies
+                            if (roll < 0.01) coinSize = 'large';
+                            else if (roll < 0.15) coinSize = 'medium';
+                            else coinSize = 'small';
+                        }
+                        
+                        const coin = new Coin(zombie.x, zombie.y, coinSize);
+                        coin.y = Utils.getGroundY(MobileDetector.getWorldHeight(), coin.height);
+                        this.coins.push(coin);
+                    }
+                    
+                    this.zombies.splice(i, 1);
+                }
+            }
             this.weaponSystem.checkReloadProgress();
             this.effectsManager.update(deltaTime);
             this.waveSystem.checkWaveCompletion();
