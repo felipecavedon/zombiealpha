@@ -2696,9 +2696,13 @@
         handleKeyDown(e) {
             const key = e.key.toLowerCase();
             
-            // Handle space bar for rocket boots
+            // Handle space bar for restart when game is over, otherwise rocket boots
             if (key === ' ') {
                 e.preventDefault();
+                if (this.game.gameOver && this.game.canRestart) {
+                    this.handleRestart();
+                    return;
+                }
                 this.keys.space = true;
                 // Initialize audio for rocket boots
                 if (!this.game.gameOver) {
@@ -5969,7 +5973,7 @@
             this.zombies = [];
             this.bullets = [];
             this.coins = [];
-            this.playerGold = 999999; // Unlimited gold
+            // playerGold is already set by initializeGameState(), no need to override it
             this.acidProjectiles = [];
             this.acidPools = [];
             
